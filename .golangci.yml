@@ -1,0 +1,28 @@
+linters:
+  enable:
+    - gofumpt
+    - thelper
+    - goimports
+    - tparallel
+    - wastedassign
+    - unparam
+    - prealloc
+    - unconvert
+    - exhaustive
+    - makezero
+    - nakedret
+    - copyloopvar
+  fast: false
+
+linters-settings:
+  copyloopvar:
+    # Check all assigning the loop variable to another variable.
+    # Default: false
+    # If true, an assignment like `a := x` will be detected as an error.
+    check-alias: true
+  exhaustive:
+    default-signifies-exhaustive: true
+  staticcheck:
+    checks: ["all"]
+  nakedret:
+    max-func-lines: 0
