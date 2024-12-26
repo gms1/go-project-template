@@ -1,0 +1,108 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-SNAPSHOT"
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goarm64:
+      - v8.0
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_{{.Version}}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+
+dockers:
+  -
+    image_templates:
+      - "ghcr.io/gms1/go-project-template:{{ .Version }}-amd64"
+    use: buildx
+    goarch: amd64
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.vendor=gms1"
+      - "--label=org.opencontainers.image.description={{ .ProjectName }} {{ .Version }}"
+      - "--label=org.opencontainers.image.url=https://github.com/gms1/{{ .ProjectName }}"
+      - "--label=org.opencontainers.image.documentation=https://github.com/gms1/{{ .ProjectName }}/blob/main/README.md"
+      - "--label=org.opencontainers.image.source=https://github.com/gms1/{{ .ProjectName }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.created={{ time \"2006-01-02T15:04:05Z07:00\" }}"
+    extra_files:
+      - LICENSE
+  -
+    image_templates:
+      - "ghcr.io/gms1/go-project-template:{{ .Version }}-arm64"
+    use: buildx
+    goarch: arm64
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.vendor=gms1"
+      - "--label=org.opencontainers.image.description={{ .ProjectName }} {{ .Version }}"
+      - "--label=org.opencontainers.image.url=https://github.com/gms1/{{ .ProjectName }}"
+      - "--label=org.opencontainers.image.documentation=https://github.com/gms1/{{ .ProjectName }}/blob/main/README.md"
+      - "--label=org.opencontainers.image.source=https://github.com/gms1/{{ .ProjectName }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.created={{ time \"2006-01-02T15:04:05Z07:00\" }}"
+    extra_files:
+      - LICENSE
+
+docker_manifests:
+  - name_template: "ghcr.io/gms1/go-project-template:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/gms1/go-project-template:{{ .Version }}-amd64"
+      - "ghcr.io/gms1/go-project-template:{{ .Version }}-arm64"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^(build|ci|docs|refactor|release|style|test):"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
