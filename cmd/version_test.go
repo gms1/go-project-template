@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/gms1/go-project-template/pkg/common"
@@ -31,6 +32,8 @@ func TestVersionCmd(t *testing.T) {
 		stdout, _, err := test.CaptureOutput(func() error { return rootCmd.Execute() })
 		assert.NoError(t, err)
 		assert.Equal(t, common.Version+"\n", stdout)
-		assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
+		if os.Getenv(common.LOG_LEVEL_NAME) == "" {
+			assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
+		}
 	}
 }

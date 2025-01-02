@@ -29,7 +29,7 @@ func TestDocsCmdFailing(t *testing.T) {
 	rootCmd.SetArgs([]string{"docs", dir})
 	generateDocsFuncOrig := generateDocsFunc
 	generateDocsFunc = func(cmd *cobra.Command, dir string) error {
-		return errors.New("generate docs failed")
+		return errors.New("Generating docs failed")
 	}
 	err := rootCmd.Execute()
 	generateDocsFunc = generateDocsFuncOrig

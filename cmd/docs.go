@@ -17,7 +17,7 @@ var docsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := generateDocsFunc(rootCmd, args[0])
 		if err != nil {
-			slog.Error("Failed to generate docs", "error", err)
+			slog.Error("Failed to generate docs", slog.Any("error", err))
 			return err
 		}
 		slog.Info("Generated docs", slog.String("directory", args[0]))
