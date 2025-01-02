@@ -38,6 +38,7 @@ func init() {
 	cobra.EnableCommandSorting = false
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose mode")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "quiet mode")
+	rootCmd.AddCommand(serviceCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(docsCmd)
 }
