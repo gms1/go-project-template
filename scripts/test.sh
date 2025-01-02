@@ -17,6 +17,7 @@ exitHandler() {
 
 trap exitHandler "EXIT"
 
+mkdir -p tmp
 if ! go test ./... -cover -coverprofile=tmp/coverage.out -v &>"${LOG}"; then
   awk '
     function color(c,s) {
