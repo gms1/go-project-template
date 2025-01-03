@@ -29,25 +29,21 @@ func NewConsoleHandler(target *os.File) slog.Handler {
 	})
 }
 
-func defaultConsoleLogger() *slog.Logger {
-	return slog.New(NewConsoleHandler(os.Stderr))
-}
-
-func defaultServiceLogger() *slog.Logger {
+func NewServiceHandler(target *os.File) slog.Handler {
 	// NOTE: using github.com/remychantenay/slog-otel instead of go.opentelemetry.io/contrib/bridges/otelslog
 	// because the later does not seem to support chaining to a console handler; see below
-	return slog.New(slogotel.OtelHandler{
-		Next: NewConsoleHandler(os.Stdout),
-	})
+	return slogotel.OtelHandler{
+		Next: NewConsoleHandler(target),
+	}
 }
 
 func InitConsoleLogging() {
 	LogLevelVar.Set(defaultLogLevel())
-	slog.SetDefault(defaultConsoleLogger())
+	slog.SetDefault(slog.New(NewConsoleHandler(os.Stderr)))
 }
 
 func InitServiceLogging() {
-	slog.SetDefault(defaultServiceLogger())
+	slog.SetDefault(slog.New(NewServiceHandler(os.Stdout)))
 }
 
 func init() {
