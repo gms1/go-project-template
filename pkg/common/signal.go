@@ -59,6 +59,7 @@ func signalHandler(channel chan os.Signal, ctx context.Context, cancel func(), s
 				slog.DebugContext(ctx, "Got SIGINT or SIGKILL")
 				StopSignalHandling(ctx)
 				cancel()
+				slog.DebugContext(ctx, "Cancelled in signal handler")
 			}
 		case <-ctx.Done():
 			StopSignalHandling(ctx)

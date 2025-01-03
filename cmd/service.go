@@ -78,10 +78,12 @@ func serviceMain(ctx context.Context, cancel context.CancelFunc) error {
 		case <-time.Tick(Tick):
 			if ticked {
 				cancel()
+				slog.DebugContext(ctx, "Cancelled in main")
+				return nil
 			} else {
 				slog.InfoContext(ctx, "tick")
+				ticked = true
 			}
-			return nil
 		}
 	}
 }
