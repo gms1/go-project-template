@@ -22,11 +22,15 @@ func TestVersionCmd(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		args := []string{"version"}
-		if testCase.verbose {
-			args = append(args, "-v")
-		}
-		if testCase.quiet {
-			args = append(args, "-q")
+		if os.Getenv(common.LOG_LEVEL_NAME) == "" {
+			common.InitConsoleLogging()
+			assert.Equal(t, slog.LevelInfo, common.LogLevelVar.Level())
+			if testCase.verbose {
+				args = append(args, "-v")
+			}
+			if testCase.quiet {
+				args = append(args, "-q")
+			}
 		}
 		rootCmd.SetArgs(args)
 		stdout, _, err := test.CaptureOutput(func() error { return rootCmd.Execute() })
