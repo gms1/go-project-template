@@ -2,9 +2,14 @@
 DN=$(dirname -- "$0")
 BN=$(basename -- "$0")
 
-# VERBOSE environment variable
-#   when not set, the log from running the tests will not be shown
-#   when set, the log output will always shown
+# environment variables:
+#   VERBOSE
+#     when not set, the log from the tests will not be shown if the tests succeeded
+#     when set, the log output will always shown
+#   OTEL_SDK_DISABLED
+#     when 'true', otel will be instrumented using a noop exporter
+#     else otel will use the default otlptracegrpc exporter
+#     when OTEL_SDK_DISABLED and OTEL_EXPORTER_OTLP_ENDPOINT are not set, OTEL_SDK_DISABLED will be set to "true" before running the tests
 #
 # additional arguments can be forwarded to 'go test'
 #   e.g. for running the tests multiple times (this will take about 30s):
@@ -16,6 +21,10 @@ BN=$(basename -- "$0")
 
 
 echo "test..."
+
+if [ -z "${OTEL_SDK_DISABLED}" -a -z "${OTEL_EXPORTER_OTLP_ENDPOINT}" ]; then
+  export OTEL_SDK_DISABLED="true"
+fi
 
 set -e
 set -o pipefail
