@@ -30,3 +30,7 @@ func TestUnknownLogLevel(t *testing.T) {
 	level := defaultLogLevel()
 	assert.Equal(t, slog.LevelInfo, level)
 }
+
+func TestInitServiceLogging(t *testing.T) {
+	InitServiceLogging()
+}

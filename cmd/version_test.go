@@ -23,7 +23,7 @@ func TestVersionCmd(t *testing.T) {
 	for _, testCase := range testCases {
 		args := []string{"version"}
 		if os.Getenv(common.LOG_LEVEL_NAME) == "" {
-			common.InitDefaultLogging()
+			common.InitConsoleLogging()
 			assert.Equal(t, slog.LevelInfo, common.LogLevelVar.Level())
 			if testCase.verbose {
 				args = append(args, "-v")

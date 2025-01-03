@@ -18,7 +18,11 @@ exitHandler() {
 trap exitHandler "EXIT"
 
 mkdir -p tmp
-if ! go test ./... -cover -coverprofile=tmp/coverage.out -v &>"${LOG}"; then
+set +e
+go test ./... -cover -coverprofile=tmp/coverage.out -v "$@" &>"${LOG}"
+RC=$?
+set -e
+if [ "${RC}" -ne 0 -o -n "${VERBOSE}" ]; then
   awk '
     function color(c,s) {
             printf("\033[%dm%s\033[0m\n",30+c,s)
@@ -28,6 +32,8 @@ if ! go test ./... -cover -coverprofile=tmp/coverage.out -v &>"${LOG}"; then
     /PASS:/ {color(2,$0);next}
     {print}
   ' "${LOG}"
+fi
+if [ "${RC}" -ne 0 ]; then
   echo "test: FAILED"
   exit 1
 fi
