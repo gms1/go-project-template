@@ -38,7 +38,6 @@ func NewServiceHandler(target *os.File) slog.Handler {
 }
 
 func InitConsoleLogging() {
-	LogLevelVar.Set(defaultLogLevel())
 	slog.SetDefault(slog.New(NewConsoleHandler(os.Stderr)))
 }
 
@@ -47,5 +46,6 @@ func InitServiceLogging() {
 }
 
 func init() {
+	LogLevelVar.Set(defaultLogLevel())
 	InitConsoleLogging()
 }

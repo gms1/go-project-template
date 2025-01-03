@@ -20,11 +20,13 @@ func TestVersionCmd(t *testing.T) {
 		{true, false, slog.LevelDebug},
 		{false, true, slog.LevelWarn},
 	}
+	loglevelOri := common.LogLevelVar.Level()
 	for _, testCase := range testCases {
+		Verbose = false
+		Quiet = false
 		args := []string{"version"}
 		if os.Getenv(common.LOG_LEVEL_NAME) == "" {
-			common.InitConsoleLogging()
-			assert.Equal(t, slog.LevelInfo, common.LogLevelVar.Level())
+			common.LogLevelVar.Set(slog.LevelInfo)
 			if testCase.verbose {
 				args = append(args, "-v")
 			}
@@ -38,6 +40,7 @@ func TestVersionCmd(t *testing.T) {
 		assert.Equal(t, common.Version+"\n", stdout)
 		if os.Getenv(common.LOG_LEVEL_NAME) == "" {
 			assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
+			common.LogLevelVar.Set(loglevelOri)
 		}
 	}
 }

@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	verbose bool = false
-	quiet   bool = false
+	Verbose bool = false
+	Quiet   bool = false
 )
 
 var rootCmd = &cobra.Command{
@@ -20,10 +20,10 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		cmd.SilenceUsage = true
-		if verbose {
+		if Verbose {
 			common.LogLevelVar.Set(slog.LevelDebug)
 		}
-		if quiet {
+		if Quiet {
 			common.LogLevelVar.Set(slog.LevelWarn)
 		}
 		slog.Debug("start")
@@ -36,8 +36,8 @@ func Execute() error {
 
 func init() {
 	cobra.EnableCommandSorting = false
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose mode")
-	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "quiet mode")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose mode")
+	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "quiet mode")
 	rootCmd.AddCommand(serviceCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(docsCmd)
