@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"log/slog"
 	"os"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -17,6 +18,7 @@ import (
 
 func NewOtelExporter(ctx context.Context) (sdktrace.SpanExporter, error) {
 	if os.Getenv("OTEL_SDK_DISABLED") == "true" {
+		slog.DebugContext(ctx, "opentelemetry is disabled")
 		return tracetest.NewNoopExporter(), nil
 	}
 	return otlptracegrpc.New(ctx)
