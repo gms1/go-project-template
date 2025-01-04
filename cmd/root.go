@@ -20,10 +20,10 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		cmd.SilenceUsage = true
-		if Verbose {
+		if Verbose && common.LogLevelVar.Level() > slog.LevelDebug {
 			common.LogLevelVar.Set(slog.LevelDebug)
 		}
-		if Quiet {
+		if Quiet && common.LogLevelVar.Level() < slog.LevelWarn {
 			common.LogLevelVar.Set(slog.LevelWarn)
 		}
 		slog.Debug("start")

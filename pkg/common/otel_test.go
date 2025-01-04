@@ -11,9 +11,19 @@ import (
 // go.opentelemetry.io/otel/sdk/trace/tracetest
 
 func TestNewOtelExporter(t *testing.T) {
-	ctx := context.Background()
-	_, err := NewOtelExporter(ctx)
-	assert.NoError(t, err)
+	testCases := []struct {
+		sdkValue string
+	}{
+		{"true"},
+		{"false"},
+	}
+	for testIdx, testCase := range testCases {
+		t.Logf("test case %d", testIdx)
+		t.Setenv("OTEL_SDK_DISABLED", testCase.sdkValue)
+		ctx := context.Background()
+		_, err := NewOtelExporter(ctx)
+		assert.NoError(t, err)
+	}
 }
 
 func TestNewOtelResource(t *testing.T) {

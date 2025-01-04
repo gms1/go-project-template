@@ -16,7 +16,8 @@ func TestSignal(t *testing.T) {
 		{true},
 		{false},
 	}
-	for _, testCase := range testCases {
+	for testIdx, testCase := range testCases {
+		t.Logf("test case %d", testIdx)
 		ctx, cancel := context.WithCancel(context.Background())
 
 		sighupCounter := 0

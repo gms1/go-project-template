@@ -21,7 +21,8 @@ func TestVersionCmd(t *testing.T) {
 		{false, true, slog.LevelWarn},
 	}
 	loglevelOri := common.LogLevelVar.Level()
-	for _, testCase := range testCases {
+	for testIdx, testCase := range testCases {
+		t.Logf("test case %d", testIdx)
 		Verbose = false
 		Quiet = false
 		args := []string{"version"}
