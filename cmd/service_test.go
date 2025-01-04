@@ -11,18 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	OTEL_EXPORTER_OTLP_ENDPOINT_NAME = "OTEL_EXPORTER_OTLP_ENDPOINT"
-	// NOTE: some tests are taking too long, when setting this environment variable to ""
-	//    --- PASS: TestServiceCmd (10.00s)
-	//    --- PASS: TestRunServiceOk (10.00s)
-	//    --- PASS: TestRunServiceFailingMain (10.00s)
-	// OTEL_EXPORTER_OTLP_ENDPOINT_VALUE = ""
-	OTEL_EXPORTER_OTLP_ENDPOINT_VALUE = "http://127.0.0.1:4317"
-)
-
 func TestServiceCmd(t *testing.T) {
-	t.Setenv(OTEL_EXPORTER_OTLP_ENDPOINT_NAME, OTEL_EXPORTER_OTLP_ENDPOINT_VALUE)
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
 
@@ -49,7 +38,6 @@ func TestServiceCmd(t *testing.T) {
 }
 
 func TestRunServiceOk(t *testing.T) {
-	t.Setenv(OTEL_EXPORTER_OTLP_ENDPOINT_NAME, OTEL_EXPORTER_OTLP_ENDPOINT_VALUE)
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
 
@@ -65,7 +53,6 @@ func TestRunServiceOk(t *testing.T) {
 }
 
 func TestRunServiceFailingInit(t *testing.T) {
-	t.Setenv(OTEL_EXPORTER_OTLP_ENDPOINT_NAME, OTEL_EXPORTER_OTLP_ENDPOINT_VALUE)
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
 
@@ -81,7 +68,6 @@ func TestRunServiceFailingInit(t *testing.T) {
 }
 
 func TestRunServiceFailingMain(t *testing.T) {
-	t.Setenv(OTEL_EXPORTER_OTLP_ENDPOINT_NAME, OTEL_EXPORTER_OTLP_ENDPOINT_VALUE)
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
 
@@ -96,7 +82,6 @@ func TestRunServiceFailingMain(t *testing.T) {
 }
 
 func TestServiceTick(t *testing.T) {
-	t.Setenv(OTEL_EXPORTER_OTLP_ENDPOINT_NAME, OTEL_EXPORTER_OTLP_ENDPOINT_VALUE)
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
 
@@ -119,7 +104,6 @@ func TestServiceTick(t *testing.T) {
 }
 
 func TestServiceCanceled(t *testing.T) {
-	t.Setenv(OTEL_EXPORTER_OTLP_ENDPOINT_NAME, OTEL_EXPORTER_OTLP_ENDPOINT_VALUE)
 	SpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
 	err := serviceInit(ctx, cancel)
