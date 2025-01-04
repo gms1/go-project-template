@@ -12,17 +12,19 @@ import (
 
 func TestNewOtelExporter(t *testing.T) {
 	testCases := []struct {
+		name     string
 		sdkValue string
 	}{
-		{"true"},
-		{"false"},
+		{"otel sdk disabled", "true"},
+		{"otel sdk enabled", "false"},
 	}
-	for testIdx, testCase := range testCases {
-		t.Logf("test case %d", testIdx)
-		t.Setenv("OTEL_SDK_DISABLED", testCase.sdkValue)
-		ctx := context.Background()
-		_, err := NewOtelExporter(ctx)
-		assert.NoError(t, err)
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Setenv("OTEL_SDK_DISABLED", testCase.sdkValue)
+			ctx := context.Background()
+			_, err := NewOtelExporter(ctx)
+			assert.NoError(t, err)
+		})
 	}
 }
 

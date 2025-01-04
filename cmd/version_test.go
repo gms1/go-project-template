@@ -12,36 +12,38 @@ import (
 
 func TestVersionCmd(t *testing.T) {
 	testCases := []struct {
+		name             string
 		verbose          bool
 		quiet            bool
 		expectedLogLevel slog.Level
 	}{
-		{false, false, slog.LevelInfo},
-		{true, false, slog.LevelDebug},
-		{false, true, slog.LevelWarn},
+		{"no option", false, false, slog.LevelInfo},
+		{"verbose", true, false, slog.LevelDebug},
+		{"quiet", false, true, slog.LevelWarn},
 	}
 	loglevelOri := common.LogLevelVar.Level()
-	for testIdx, testCase := range testCases {
-		t.Logf("test case %d", testIdx)
-		Verbose = false
-		Quiet = false
-		args := []string{"version"}
-		if os.Getenv(common.LOG_LEVEL_NAME) == "" {
-			common.LogLevelVar.Set(slog.LevelInfo)
-			if testCase.verbose {
-				args = append(args, "-v")
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			Verbose = false
+			Quiet = false
+			args := []string{"version"}
+			if os.Getenv(common.LOG_LEVEL_NAME) == "" {
+				common.LogLevelVar.Set(slog.LevelInfo)
+				if testCase.verbose {
+					args = append(args, "-v")
+				}
+				if testCase.quiet {
+					args = append(args, "-q")
+				}
 			}
-			if testCase.quiet {
-				args = append(args, "-q")
+			rootCmd.SetArgs(args)
+			stdout, _, err := test.CaptureOutput(func() error { return rootCmd.Execute() })
+			assert.NoError(t, err)
+			assert.Equal(t, common.Version+"\n", stdout)
+			if os.Getenv(common.LOG_LEVEL_NAME) == "" {
+				assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
+				common.LogLevelVar.Set(loglevelOri)
 			}
-		}
-		rootCmd.SetArgs(args)
-		stdout, _, err := test.CaptureOutput(func() error { return rootCmd.Execute() })
-		assert.NoError(t, err)
-		assert.Equal(t, common.Version+"\n", stdout)
-		if os.Getenv(common.LOG_LEVEL_NAME) == "" {
-			assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
-			common.LogLevelVar.Set(loglevelOri)
-		}
+		})
 	}
 }

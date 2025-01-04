@@ -65,4 +65,4 @@
   ```
 
   this updates the `Version` in "pkg/common/about.go", generates the docs in "docs" and commits and pushes the changes using the commit message "release: <version>".
-  A "v<version>" tag is then created and pushed, which triggers the release workflow from .github/workflows/release.yaml. This release workflow then creates the binaries and archives for the most important OS/Arch combinations, as well as a multi-platform docker image. If the lates is not needed, the “Dockerfile” can be removed, as well as the "docker" and "docker_manifests" sections in ".goreleaser.yaml"
+  A "v<version>" tag is then created and pushed, which triggers the release workflow from .github/workflows/release.yaml. This release workflow then creates the binaries and archives for the most important OS/Arch combinations, as well as a multi-platform docker image. If the later is not needed, the “Dockerfile” can be removed, as well as the "docker" and "docker_manifests" sections in ".goreleaser.yaml"
