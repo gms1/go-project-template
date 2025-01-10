@@ -72,15 +72,30 @@ func TestRunServiceFailingMain(t *testing.T) {
 	))
 }
 
-func TestServiceTick(t *testing.T) {
+func TestServiceInit(t *testing.T) {
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
-
 	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		common.StopSignalHandling(ctx)
+	}()
+
 	err := serviceInit(ctx, cancel)
 	assert.NoError(t, err)
 	err = serviceInit(ctx, cancel)
 	assert.Error(t, err)
+}
+
+func TestServiceMainTick(t *testing.T) {
+	SpanName = t.Name()
+	ServiceInstanceId = "Test"
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		common.StopSignalHandling(ctx)
+	}()
+
+	err := serviceInit(ctx, cancel)
+	assert.NoError(t, err)
 
 	timoutTimer := time.AfterFunc(time.Millisecond*250, func() {
 		cancel()
@@ -90,13 +105,17 @@ func TestServiceTick(t *testing.T) {
 
 	Tick = time.Millisecond * 50
 	err = serviceMain(ctx, cancel)
-	common.StopSignalHandling(ctx)
 	assert.NoError(t, err)
 }
 
-func TestServiceCanceled(t *testing.T) {
+func TestServiceMainCancel(t *testing.T) {
 	SpanName = t.Name()
+	ServiceInstanceId = "Test"
 	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		common.StopSignalHandling(ctx)
+	}()
+
 	err := serviceInit(ctx, cancel)
 	assert.NoError(t, err)
 
@@ -107,6 +126,5 @@ func TestServiceCanceled(t *testing.T) {
 
 	Tick = time.Millisecond * 250
 	err = serviceMain(ctx, cancel)
-	common.StopSignalHandling(ctx)
 	assert.NoError(t, err)
 }

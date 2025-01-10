@@ -68,6 +68,7 @@ func serviceInit(ctx context.Context, cancel context.CancelFunc) error {
 		return err
 	}
 
+	// NOTE: maxprocs.Set honors GOMAXPROCS environment variable if present
 	//nolint:errcheck
 	maxprocs.Set()
 	slog.Debug("cpu", slog.Int("GOMAXPROCS", runtime.GOMAXPROCS(0)), slog.Int("NumCPU", runtime.NumCPU()))
