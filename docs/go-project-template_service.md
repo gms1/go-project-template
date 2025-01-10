@@ -1,19 +1,19 @@
-## go-project-template version
+## go-project-template service
 
-Print the version
+Run a service
 
 ### Synopsis
 
-Print the version of go-project-template
+Run as a service
 
 ```
-go-project-template version [flags]
+go-project-template service [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for version
+  -h, --help   help for service
 ```
 
 ### Options inherited from parent commands
