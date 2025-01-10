@@ -2,20 +2,22 @@ package test
 
 import (
 	"os"
+
+	"github.com/prashantv/gostub"
 )
 
 func CaptureOutput(f func() error) (string, string, error) {
-	stdout := os.Stdout
-	stderr := os.Stderr
 	outFile, _ := os.CreateTemp("", "gotest")
 	errFile, _ := os.CreateTemp("", "gotest")
 	defer os.Remove(outFile.Name())
 	defer os.Remove(errFile.Name())
-	os.Stdout = outFile
-	os.Stderr = errFile
+
+	stubs := gostub.New()
+	defer stubs.Reset()
+	stubs.Stub(&os.Stdout, outFile)
+	stubs.Stub(&os.Stderr, errFile)
+
 	err := f()
-	os.Stdout = stdout
-	os.Stderr = stderr
 
 	outFile.Close()
 	errFile.Close()

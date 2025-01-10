@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"log/slog"
-	"os"
 	"testing"
 
 	"github.com/gms1/go-project-template/pkg/common"
 	"github.com/gms1/go-project-template/test"
+	"github.com/prashantv/gostub"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,26 +24,27 @@ func TestVersionCmd(t *testing.T) {
 	loglevelOri := common.LogLevelVar.Level()
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			Verbose = false
-			Quiet = false
+			common.LogLevelVar.Set(slog.LevelInfo)
+			defer func() {
+				common.LogLevelVar.Set(loglevelOri)
+			}()
+			stubs := gostub.New()
+			defer stubs.Reset()
+			stubs.Stub(&Verbose, false)
+			stubs.Stub(&Quiet, false)
+
 			args := []string{"version"}
-			if os.Getenv(common.LOG_LEVEL_NAME) == "" {
-				common.LogLevelVar.Set(slog.LevelInfo)
-				if testCase.verbose {
-					args = append(args, "-v")
-				}
-				if testCase.quiet {
-					args = append(args, "-q")
-				}
+			if testCase.verbose {
+				args = append(args, "-v")
+			}
+			if testCase.quiet {
+				args = append(args, "-q")
 			}
 			rootCmd.SetArgs(args)
 			stdout, _, err := test.CaptureOutput(func() error { return rootCmd.Execute() })
 			assert.NoError(t, err)
 			assert.Equal(t, common.Version+"\n", stdout)
-			if os.Getenv(common.LOG_LEVEL_NAME) == "" {
-				assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
-				common.LogLevelVar.Set(loglevelOri)
-			}
+			assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
 		})
 	}
 }

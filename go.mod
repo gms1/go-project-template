@@ -5,6 +5,7 @@ go 1.23.4
 require (
 	github.com/lmittmann/tint v1.0.6
 	github.com/mattn/go-isatty v0.0.20
+	github.com/prashantv/gostub v1.1.0
 	github.com/remychantenay/slog-otel v1.3.2
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0

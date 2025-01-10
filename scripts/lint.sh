@@ -8,6 +8,7 @@ set -e
 set -o pipefail
 cd "${DN}/.."
 
+go mod tidy
 golangci-lint run
 
 echo "lint: SUCCEEDED"

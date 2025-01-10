@@ -8,32 +8,23 @@ import (
 	"time"
 
 	"github.com/gms1/go-project-template/pkg/common"
+	"github.com/prashantv/gostub"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestServiceCmd(t *testing.T) {
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
-
-	serviceInitFuncOri := ServiceInitFunc
-	serviceMainFuncOri := ServiceMainFunc
-
-	ServiceInitFunc = func(ctx context.Context, cancel context.CancelFunc) error {
-		return nil
-	}
-
-	ServiceMainFunc = func(ctx context.Context, cancel context.CancelFunc) error {
+	stubs := gostub.New()
+	defer stubs.Reset()
+	stubs.StubFunc(&ServiceInitFunc, nil)
+	stubs.Stub(&ServiceMainFunc, func(ctx context.Context, cancel context.CancelFunc) error {
 		slog.InfoContext(ctx, "ok")
 		return nil
-	}
+	})
 
 	rootCmd.SetArgs([]string{"service"})
-
 	err := rootCmd.Execute()
-
-	ServiceInitFunc = serviceInitFuncOri
-	ServiceMainFunc = serviceMainFuncOri
-
 	assert.NoError(t, err)
 }
 
