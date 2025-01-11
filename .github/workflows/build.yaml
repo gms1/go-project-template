@@ -34,4 +34,3 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: gms1/go-project-template
-        path: tmp/coverage.out
