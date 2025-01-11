@@ -80,4 +80,6 @@ seconds=$((end - start))
 
 [ "${RC}" -eq 0 ] || die "test: FAILED in ${seconds}."
 
+echo "test: COVERAGE:"
+go tool cover -func=./tmp/coverage.out | sed '/100\.0/d; s/^/  /'
 echo "test: SUCCEEDED in ${seconds} seconds."
