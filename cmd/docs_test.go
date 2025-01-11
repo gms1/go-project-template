@@ -17,8 +17,7 @@ func TestDocsCmdOk(t *testing.T) {
 	stubs.StubFunc(&generateDocsFunc, nil)
 
 	rootCmd.SetArgs([]string{"docs", dir})
-	err := rootCmd.Execute()
-	assert.NoError(t, err)
+	assert.NoError(t, rootCmd.Execute())
 }
 
 func TestDocsCmdFailing(t *testing.T) {
@@ -26,9 +25,10 @@ func TestDocsCmdFailing(t *testing.T) {
 	defer os.RemoveAll(dir)
 	stubs := gostub.New()
 	defer stubs.Reset()
-	stubs.StubFunc(&generateDocsFunc, errors.New("Generating docs failed"))
+
+	givenError := errors.New("test generating docs failed")
+	stubs.StubFunc(&generateDocsFunc, givenError)
 
 	rootCmd.SetArgs([]string{"docs", dir})
-	err := rootCmd.Execute()
-	assert.Error(t, err)
+	assert.Equal(t, givenError, rootCmd.Execute())
 }

@@ -24,8 +24,7 @@ func TestServiceCmd(t *testing.T) {
 	})
 
 	rootCmd.SetArgs([]string{"service"})
-	err := rootCmd.Execute()
-	assert.NoError(t, err)
+	assert.NoError(t, rootCmd.Execute())
 }
 
 func TestRunServiceOk(t *testing.T) {
@@ -46,10 +45,11 @@ func TestRunServiceOk(t *testing.T) {
 func TestRunServiceFailingInit(t *testing.T) {
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
+	givenError := errors.New("test init failed")
 
-	assert.Error(t, runService(
+	assert.Equal(t, givenError, runService(
 		func(ctx context.Context, cancel context.CancelFunc) error {
-			return errors.New("test init failed")
+			return givenError
 		},
 		func(ctx context.Context, cancel context.CancelFunc) error {
 			slog.InfoContext(ctx, "ok")
@@ -61,13 +61,14 @@ func TestRunServiceFailingInit(t *testing.T) {
 func TestRunServiceFailingMain(t *testing.T) {
 	SpanName = t.Name()
 	ServiceInstanceId = "Test"
+	givenError := errors.New("test main failed")
 
-	assert.Error(t, runService(
+	assert.Equal(t, givenError, runService(
 		func(ctx context.Context, cancel context.CancelFunc) error {
 			return nil
 		},
 		func(ctx context.Context, cancel context.CancelFunc) error {
-			return errors.New("test main failed")
+			return givenError
 		},
 	))
 }
@@ -80,10 +81,8 @@ func TestServiceInit(t *testing.T) {
 		common.StopSignalHandling(ctx)
 	}()
 
-	err := serviceInit(ctx, cancel)
-	assert.NoError(t, err)
-	err = serviceInit(ctx, cancel)
-	assert.Error(t, err)
+	assert.NoError(t, serviceInit(ctx, cancel))
+	assert.Error(t, serviceInit(ctx, cancel))
 }
 
 func TestServiceMainTick(t *testing.T) {
@@ -94,8 +93,7 @@ func TestServiceMainTick(t *testing.T) {
 		common.StopSignalHandling(ctx)
 	}()
 
-	err := serviceInit(ctx, cancel)
-	assert.NoError(t, err)
+	assert.NoError(t, serviceInit(ctx, cancel))
 
 	timoutTimer := time.AfterFunc(time.Millisecond*250, func() {
 		cancel()
@@ -104,8 +102,7 @@ func TestServiceMainTick(t *testing.T) {
 	defer timoutTimer.Stop()
 
 	Tick = time.Millisecond * 50
-	err = serviceMain(ctx, cancel)
-	assert.NoError(t, err)
+	assert.NoError(t, serviceMain(ctx, cancel))
 }
 
 func TestServiceMainCancel(t *testing.T) {
@@ -116,8 +113,7 @@ func TestServiceMainCancel(t *testing.T) {
 		common.StopSignalHandling(ctx)
 	}()
 
-	err := serviceInit(ctx, cancel)
-	assert.NoError(t, err)
+	assert.NoError(t, serviceInit(ctx, cancel))
 
 	sigintTimer := time.AfterFunc(time.Millisecond*50, func() {
 		cancel()
@@ -125,6 +121,5 @@ func TestServiceMainCancel(t *testing.T) {
 	defer sigintTimer.Stop()
 
 	Tick = time.Millisecond * 250
-	err = serviceMain(ctx, cancel)
-	assert.NoError(t, err)
+	assert.NoError(t, serviceMain(ctx, cancel))
 }

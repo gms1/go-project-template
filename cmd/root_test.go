@@ -19,21 +19,20 @@ func TestRootCmdOk(t *testing.T) {
 }
 
 func TestRootCmdFailing(t *testing.T) {
-	failingError := errors.New("test-failing-command failed")
+	givenError := errors.New("test test-failing-command failed")
 	failingCmd := &cobra.Command{
 		Use:   "test-failing-command",
 		Short: "failing test command",
 		Long:  `test command that always fails`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return failingError
+			return givenError
 		},
 	}
 	rootCmd.AddCommand(failingCmd)
+	defer func() {
+		rootCmd.RemoveCommand(failingCmd)
+	}()
 
 	rootCmd.SetArgs([]string{"test-failing-command"})
-	err := Execute()
-	rootCmd.RemoveCommand(failingCmd)
-	t.Logf("got error '%v'", err)
-	assert.Error(t, err)
-	assert.Equal(t, failingError.Error(), err.Error())
+	assert.Equal(t, givenError, Execute())
 }
