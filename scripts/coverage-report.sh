@@ -1,13 +1,19 @@
 #!/bin/bash
 DN=$(dirname -- "$0")
 BN=$(basename -- "$0")
+source "${DN}/common"
 
-set -e
-set -o pipefail
-cd "${DN}/.."
+usage() {
+  cat <<EOT
+usage: ${BN} OPTIONS
 
-if [ ! -f tmp/coverage.out ]; then
-  echo "'tmp/coverage.out' is not available, please run the tests first"
+OPTIONS:
+  -h|--help|help  ... display this usage information and exit
+EOT
   exit 1
-fi
+}
+
+[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
+
+[ -f tmp/coverage.out ] || die "'tmp/coverage.out' is not available, please run the tests first"
 go tool cover -html=tmp/coverage.out

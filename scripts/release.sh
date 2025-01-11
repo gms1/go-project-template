@@ -1,36 +1,30 @@
 #!/bin/bash
 DN=$(dirname -- "$0")
 BN=$(basename -- "$0")
+source "${DN}/common"
 
-echo "release..."
+usage() {
+  cat <<EOT
+usage: ${BN} OPTIONS <version>
 
-# environment variables:
-#   FORCE ... if set to non-empty, the tag will be recreated if it exists
+OPTIONS:
+  -h|--help|help  ... display this usage information and exit
 
-errorHandler() {
-  local script="$0"
-  local line="$1"
-  local command="$2"
-  local code="$3"
-  echo "${script}: line: ${line}: command \"${command}\" exited with ${code}" >&2
+environment variables:
+  FORCE ... if set to non-empty, the tag will be recreated if it exists
+EOT
+  exit 1
 }
 
-trap 'errorHandler "$LINENO" "$BASH_COMMAND" "$?"' "ERR"
-
-set -e
-set -o pipefail
-cd "${DN}/.."
+[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
 
 VER="$1"
-if [ -z "${VER}" -o "$#" -ne 1 ]; then
-  echo "usage error: usage: ${BN} <version>" >&2
-  exit 1
-fi
+[ -n "${VER}" -a "$#" -eq 1 ] || usage
 
-if ! git diff --cached --quiet &>/dev/null || ! git diff --quiet &>/dev/null; then
-  echo "repo is not clean" >&2
-  exit 1
-fi
+echo "release ${VER}..."
+
+git diff --cached --quiet &>/dev/null || die "repo is not clean (changes in staging area)"
+git diff --quiet &>/dev/null || die "repo is not clean (changes not staged)"
 
 sed -i "s|\(Version\s*=\s*\"\)[^\"]*\"|\1${VER}\"|" pkg/common/about.go
 
@@ -54,4 +48,4 @@ fi
 git tag "v${VER}" -f -a -m "release: ${VER}"
 git push origin --tags
 
-echo "release: SUCCEEDED"
+echo "release ${VER}: SUCCEEDED"

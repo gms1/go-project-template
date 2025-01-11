@@ -2,6 +2,7 @@
 
 /dist/
 /tmp/
+/.local/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

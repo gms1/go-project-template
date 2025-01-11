@@ -1,19 +1,27 @@
 #!/bin/bash
 DN=$(dirname -- "$0")
 BN=$(basename -- "$0")
+source "${DN}/common"
 
-echo "export..."
+usage() {
+  cat <<EOT
+usage: ${BN} OPTIONS <target-project-name> [target-project-owner]
 
-set -e
-set -o pipefail
-cd "${DN}/.."
+OPTIONS:
+  -h|--help|help  ... display this usage information and exit
+
+EOT
+  exit 1
+}
+
+
+[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
 
 PROJECT_NAME="$1"
 PROJECT_OWNER="$2"
-if [ -z "${PROJECT_NAME}" -o "$#" -lt 1 -o "$#" -gt 2 ]; then
-  echo "usage error: usage: ${BN} <target-project-name> [target-project-owner]" >&2
-  exit 1
-fi
+[ -n "${PROJECT_NAME}" -a "$#" -ge 1 -a "$#" -le 2 ] || usage
+
+echo "export..."
 
 PARENT_PREFIX=$(realpath ..)
 
