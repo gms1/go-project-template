@@ -3,14 +3,11 @@ package cmd
 import (
 	"context"
 	"log/slog"
-	"runtime"
 	"time"
 
 	"github.com/gms1/go-project-template/pkg/common"
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/otel"
-
-	"go.uber.org/automaxprocs/maxprocs"
 )
 
 var (
@@ -68,10 +65,7 @@ func serviceInit(ctx context.Context, cancel context.CancelFunc) error {
 		return err
 	}
 
-	// NOTE: maxprocs.Set honors GOMAXPROCS environment variable if present
-	//nolint:errcheck
-	maxprocs.Set()
-	slog.Debug("cpu", slog.Int("GOMAXPROCS", runtime.GOMAXPROCS(0)), slog.Int("NumCPU", runtime.NumCPU()))
+	common.InitRuntime()
 
 	return nil
 }

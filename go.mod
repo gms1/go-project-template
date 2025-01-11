@@ -3,9 +3,11 @@ module github.com/gms1/go-project-template
 go 1.23.4
 
 require (
+	github.com/KimMachineGun/automemlimit v0.7.0
 	github.com/lmittmann/tint v1.0.6
 	github.com/mattn/go-isatty v0.0.20
 	github.com/prashantv/gostub v1.1.0
+	github.com/rdforte/gomaxecs v1.1.1
 	github.com/remychantenay/slog-otel v1.3.2
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
@@ -24,6 +26,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
