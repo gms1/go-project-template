@@ -21,18 +21,21 @@ EOT
 
 echo "snapshot..."
 
+DOCKER_LOGGED_IN=$(cat ~/.docker/config.json 2>/dev/null | jq -r '.auths."ghcr.io".auth' 2>/dev/null)
+
+setNextVersion
+gitMustBeClean pkg/common/about.go
+
+sed -i "s|\(Version\s*=\s*\"\)[^\"]*\"|\1${NEXT_VERSION}\"|" pkg/common/about.go
+
 # environment variables:
 #   NO_PUSH ... if set to non-empty, the images will not be pushed
 
-DOCKER_LOGGED_IN=$(cat ~/.docker/config.json 2>/dev/null | jq -r '.auths."ghcr.io".auth' 2>/dev/null)
-
 export GORELEASER_CURRENT_TAG="v${VERSION}"
-
+# NOTE: goreleaser increments the current patch version from the '${GORELEASER_CURRENT_TAG}' to get the new version
 goreleaser release --snapshot --clean
 
-# NOTE: goreleaser increments the current patch version from the '${GORELEASER_CURRENT_TAG}' to get the new version
-
-setNextVersion
+git checkout pkg/common/about.go
 
 if [ -n "${NO_PUSH}" -o -z "${DOCKER_LOGGED_IN}" -o "${DOCKER_LOGGED_IN}" = "null" ]; then
   echo "SUCCEEDED (docker images not pushed)"

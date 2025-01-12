@@ -23,8 +23,7 @@ VER="$1"
 
 echo "release ${VER}..."
 
-git diff --cached --quiet &>/dev/null || die "repo is not clean (changes in staging area)"
-git diff --quiet &>/dev/null || die "repo is not clean (changes not staged)"
+gitMustBeClean
 
 sed -i "s|\(Version\s*=\s*\"\)[^\"]*\"|\1${VER}\"|" pkg/common/about.go
 

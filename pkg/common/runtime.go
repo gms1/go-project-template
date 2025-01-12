@@ -10,7 +10,8 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
-// NOTE: currently the go runtime is not container-aware (please see e.g https://github.com/golang/go/issues/33803)
+// InitRuntime set defaults for GOMAXPROCS and GOMEMLIMIT if running in cgroup
+// since currently the go runtime is not container/cgroup-aware (please see e.g https://github.com/golang/go/issues/33803)
 func InitRuntime() {
 	// NOTE: maxprocs.Set honors GOMAXPROCS environment variable if present
 	if gomaxecs.IsECS() {

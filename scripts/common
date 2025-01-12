@@ -21,6 +21,7 @@ errorHandler() {
   local line="$1"
   local command="$2"
   local code="$3"
+  set +x
   err "${script}: line: ${line}: command \"${command}\" exited with ${code}"
 }
 
@@ -37,6 +38,11 @@ setNextVersion() {
   NEXT_VERSION="${versionParts[0]}.${versionParts[1]}.${nextPatchVersion}"
 }
 
+#---------------------------------------------------------
+gitMustBeClean() {
+  git diff --cached --quiet "$@" &>/dev/null || die "repo $@ is not clean (changes in staging area)"
+  git diff --quiet "$@" &>/dev/null || die "repo $@ is not clean (changes not staged)"
+}
 #---------------------------------------------------------
 
 trap 'errorHandler "$LINENO" "$BASH_COMMAND" "$?"' "ERR"
