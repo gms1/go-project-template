@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSignal(t *testing.T) {
+func TestInitSignalHandler(t *testing.T) {
 	testCases := []struct {
-		name   string
-		sighup bool
+		name       string
+		withSighup bool
 	}{
 		{"with sighup", true},
 		{"without sighup", false},
@@ -23,7 +23,7 @@ func TestSignal(t *testing.T) {
 
 			sighupCounter := 0
 
-			if testCase.sighup {
+			if testCase.withSighup {
 				sighupFunc := func() {
 					sighupCounter++
 				}
@@ -39,7 +39,7 @@ func TestSignal(t *testing.T) {
 
 			duration := time.Millisecond * 50
 
-			if testCase.sighup {
+			if testCase.withSighup {
 				sighupTimer = time.AfterFunc(duration, func() {
 					t.Log("SENDING SIGHUP")
 					assert.NoError(t, syscall.Kill(syscall.Getpid(), syscall.SIGHUP), "send SIGHUP signal")
@@ -60,7 +60,7 @@ func TestSignal(t *testing.T) {
 			})
 
 			defer func() {
-				if testCase.sighup {
+				if testCase.withSighup {
 					sighupTimer.Stop()
 				}
 				sigintTimer.Stop()
@@ -76,7 +76,7 @@ func TestSignal(t *testing.T) {
 				}
 			}
 
-			if testCase.sighup {
+			if testCase.withSighup {
 				assert.Equal(t, 1, sighupCounter)
 			} else {
 				assert.Equal(t, 0, sighupCounter)

@@ -8,27 +8,23 @@ import (
 )
 
 func TestDefaultLogLevel(t *testing.T) {
-	t.Setenv(LOG_LEVEL_NAME, "")
-	level := defaultLogLevel()
-	assert.Equal(t, slog.LevelInfo, level)
-}
-
-func TestKnownLogLevelString(t *testing.T) {
-	t.Setenv(LOG_LEVEL_NAME, "DEBUG")
-	level := defaultLogLevel()
-	assert.Equal(t, slog.LevelDebug, level)
-}
-
-func TestKnownLogLevelNumber(t *testing.T) {
-	t.Setenv(LOG_LEVEL_NAME, "WARN+4")
-	level := defaultLogLevel()
-	assert.Equal(t, slog.LevelWarn+4, level)
-}
-
-func TestUnknownLogLevel(t *testing.T) {
-	t.Setenv(LOG_LEVEL_NAME, "unknown")
-	level := defaultLogLevel()
-	assert.Equal(t, slog.LevelInfo, level)
+	testCases := []struct {
+		name             string
+		givenLogLevel    string
+		expectedLogLevel slog.Level
+	}{
+		{"default", "", slog.LevelInfo},
+		{"with DEBUG", "DEBUG", slog.LevelDebug},
+		{"with WARN+4", "WARN+4", slog.LevelWarn + 4},
+		{"with unknown", "unknown", slog.LevelInfo},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Setenv(LOG_LEVEL_NAME, testCase.givenLogLevel)
+			level := defaultLogLevel()
+			assert.Equal(t, testCase.expectedLogLevel, level)
+		})
+	}
 }
 
 func TestInitServiceLogging(t *testing.T) {

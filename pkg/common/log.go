@@ -16,7 +16,7 @@ var LogLevelVar = new(slog.LevelVar)
 
 func defaultLogLevel() slog.Level {
 	var level slog.Level
-	if err := level.UnmarshalText([]byte(GetEnv(LOG_LEVEL_NAME, "INFO"))); err != nil {
+	if err := level.UnmarshalText([]byte(Getenv(LOG_LEVEL_NAME, "INFO"))); err != nil {
 		return slog.LevelInfo
 	}
 	return level
