@@ -12,7 +12,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+func AssertNoSignalHandler(t *testing.T) {
+	t.Helper()
+	assert.False(t, common.HasSignalHandler(), "a signal handler is registered")
+}
+
 func TestServiceCmd(t *testing.T) {
+	defer AssertNoSignalHandler(t)
 	common.ServiceInstanceId = "Test"
 	common.SpanName = t.Name()
 	stubs := gostub.New()
@@ -27,6 +33,7 @@ func TestServiceCmd(t *testing.T) {
 }
 
 func TestServiceMainTick(t *testing.T) {
+	defer AssertNoSignalHandler(t)
 	common.ServiceInstanceId = "Test"
 	common.SpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -40,11 +47,15 @@ func TestServiceMainTick(t *testing.T) {
 	})
 	defer timoutTimer.Stop()
 
-	tick = time.Millisecond * 50
+	stubs := gostub.New()
+	stubs.Stub(&tick, time.Millisecond*50)
+	defer stubs.Reset()
+
 	assert.NoError(t, serviceMain(ctx, cancel, nil))
 }
 
 func TestServiceMainCancel(t *testing.T) {
+	defer AssertNoSignalHandler(t)
 	common.ServiceInstanceId = "Test"
 	common.SpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -57,6 +68,9 @@ func TestServiceMainCancel(t *testing.T) {
 	})
 	defer sigintTimer.Stop()
 
-	tick = time.Millisecond * 250
+	stubs := gostub.New()
+	stubs.Stub(&tick, time.Millisecond*250)
+	defer stubs.Reset()
+
 	assert.NoError(t, serviceMain(ctx, cancel, nil))
 }

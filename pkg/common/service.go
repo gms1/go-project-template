@@ -25,6 +25,12 @@ func RunService(main ServiceMainFunc, sigHupFunc *SigHupFunc) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	if err := InitSignalHandler(ctx, cancel, sigHupFunc); err != nil {
+		slog.ErrorContext(ctx, "Failed to initialize", slog.Any("error", err))
+		return err
+	}
+	defer StopSignalHandling(ctx)
+
 	traceProvider := NewOtelDefaultTraceProvider(ctx, ServiceInstanceId)
 	defer func() { _ = traceProvider.Shutdown(ctx) }()
 
@@ -32,18 +38,11 @@ func RunService(main ServiceMainFunc, sigHupFunc *SigHupFunc) error {
 
 	tracer := traceProvider.Tracer(Package)
 
-	err := InitSignalHandler(ctx, cancel, sigHupFunc)
-	if err != nil {
-		slog.ErrorContext(ctx, "Failed to initialize", slog.Any("error", err))
-		return err
-	}
-	defer StopSignalHandling(ctx)
-
 	{
 		ctx, span := tracer.Start(ctx, SpanName)
 		defer span.End()
 
-		err = main(ctx, cancel, span)
+		err := main(ctx, cancel, span)
 		if err != nil {
 			slog.ErrorContext(ctx, "Running service failed", slog.Any("error", err))
 			return err

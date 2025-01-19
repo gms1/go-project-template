@@ -48,6 +48,12 @@ func StopSignalHandling(ctx context.Context) {
 	slog.DebugContext(ctx, "Stopped signal handling")
 }
 
+func HasSignalHandler() bool {
+	signalMutex.Lock()
+	defer signalMutex.Unlock()
+	return signalChan != nil
+}
+
 func signalHandler(channel chan os.Signal, ctx context.Context, cancel func(), sighupFunc *SigHupFunc) {
 	for {
 		select {
@@ -65,7 +71,6 @@ func signalHandler(channel chan os.Signal, ctx context.Context, cancel func(), s
 				slog.DebugContext(ctx, "Cancelled in signal handler")
 			}
 		case <-ctx.Done():
-			StopSignalHandling(ctx)
 			slog.DebugContext(ctx, "Done in signal handler")
 			return
 		}

@@ -1,6 +1,7 @@
 #!/bin/bash
 DN=$(dirname -- "$0")
 BN=$(basename -- "$0")
+source "${DN}/common"
 
 usage() {
   cat <<EOT
@@ -25,6 +26,8 @@ environment variables:
     when 'true', otel will be instrumented using a noop exporter
     else otel will use the default otlptracegrpc exporter
     when OTEL_SDK_DISABLED and OTEL_EXPORTER_OTLP_ENDPOINT are not set, OTEL_SDK_DISABLED will be set to "true" before running the tests
+  LOG_LEVEL=DEBUG
+    sets the logging level to debug
 EOT
   exit 1
 }
@@ -61,24 +64,31 @@ mkdir -p tmp
 
 start=$(date "+%s")
 
+cmd=(go test ./... -cover -coverprofile=tmp/coverage.out -v)
+if [ "$#" -eq 0 ]; then
+  cmd+=(-count=1)
+fi
+cmd+=( "$@" )
+
+trap - "ERR"
+set +e
+echo "${cmd[@]}"
 if [ -n "${VERBOSE}" ]; then
-  set +e
-  go test ./... -cover -coverprofile=tmp/coverage.out -v "$@" 2>&1 | colorize
+  "${cmd[@]}" 2>&1 | colorize
   RC=$?
-  set -e
 else
   LOG=$(mktemp)
-  set +e
-  go test ./... -cover -coverprofile=tmp/coverage.out -v "$@" &>"${LOG}"
+  "${cmd[@]}" &>"${LOG}"
   RC=$?
-  set -e
   [ "${RC}" -eq 0 ] || colorize "${LOG}"
 fi
+setErrorHandler
+set -e
 
 end=$(date "+%s")
 seconds=$((end - start))
 
-[ "${RC}" -eq 0 ] || die "test: FAILED in ${seconds}."
+[ "${RC}" -eq 0 ] || die "test: FAILED in ${seconds} seconds."
 
 echo "test: COVERAGE:"
 go tool cover -func=./tmp/coverage.out | sed '/100\.0/d; s/^/  /'

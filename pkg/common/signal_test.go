@@ -9,7 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func AssertNoSignalHandler(t *testing.T) {
+	t.Helper()
+	assert.False(t, HasSignalHandler(), "a signal handler is registered")
+}
+
 func TestInitSignalHandler(t *testing.T) {
+	defer AssertNoSignalHandler(t)
 	testCases := []struct {
 		name       string
 		withSighup bool
@@ -33,7 +39,9 @@ func TestInitSignalHandler(t *testing.T) {
 			}
 
 			err := InitSignalHandler(ctx, cancel, nil)
-			assert.Error(t, err, "init twice")
+			if assert.Error(t, err, "init twice") {
+				assert.Equal(t, ErrorSignalHandlerAlreadyInitialized, err)
+			}
 
 			var sighupTimer, sigintTimer, timoutTimer *time.Timer
 
@@ -54,12 +62,12 @@ func TestInitSignalHandler(t *testing.T) {
 			duration += time.Millisecond * 200
 
 			timoutTimer = time.AfterFunc(duration, func() {
-				StopSignalHandling(ctx)
 				cancel()
 				assert.Fail(t, "timeout waiting for done")
 			})
 
 			defer func() {
+				StopSignalHandling(ctx)
 				if testCase.withSighup {
 					sighupTimer.Stop()
 				}
