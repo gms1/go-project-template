@@ -24,7 +24,7 @@ func TestInitSignalHandler(t *testing.T) {
 			sighupCounter := 0
 
 			if testCase.withSighup {
-				sighupFunc := func() {
+				var sighupFunc SigHupFunc = func() {
 					sighupCounter++
 				}
 				assert.NoError(t, InitSignalHandler(ctx, cancel, &sighupFunc), "init with sighup")

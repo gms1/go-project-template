@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"testing"
 	"time"
@@ -10,90 +9,30 @@ import (
 	"github.com/gms1/go-project-template/pkg/common"
 	"github.com/prashantv/gostub"
 	"github.com/stretchr/testify/assert"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestServiceCmd(t *testing.T) {
-	SpanName = t.Name()
-	ServiceInstanceId = "Test"
+	common.ServiceInstanceId = "Test"
+	common.SpanName = t.Name()
 	stubs := gostub.New()
 	defer stubs.Reset()
-	stubs.StubFunc(&ServiceInitFunc, nil)
-	stubs.Stub(&ServiceMainFunc, func(ctx context.Context, cancel context.CancelFunc) error {
+	stubs.Stub(&serviceMainFunc, func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error {
 		slog.InfoContext(ctx, "ok")
 		return nil
 	})
 
 	rootCmd.SetArgs([]string{"service"})
-	assert.NoError(t, rootCmd.Execute())
-}
-
-func TestRunServiceOk(t *testing.T) {
-	SpanName = t.Name()
-	ServiceInstanceId = "Test"
-
-	assert.NoError(t, runService(
-		func(ctx context.Context, cancel context.CancelFunc) error {
-			return nil
-		},
-		func(ctx context.Context, cancel context.CancelFunc) error {
-			// NOTE: testing span withoug any log message
-			return nil
-		},
-	))
-}
-
-func TestRunServiceFailingInit(t *testing.T) {
-	SpanName = t.Name()
-	ServiceInstanceId = "Test"
-	givenError := errors.New("test init failed")
-
-	assert.Equal(t, givenError, runService(
-		func(ctx context.Context, cancel context.CancelFunc) error {
-			return givenError
-		},
-		func(ctx context.Context, cancel context.CancelFunc) error {
-			slog.InfoContext(ctx, "ok")
-			return nil
-		},
-	))
-}
-
-func TestRunServiceFailingMain(t *testing.T) {
-	SpanName = t.Name()
-	ServiceInstanceId = "Test"
-	givenError := errors.New("test main failed")
-
-	assert.Equal(t, givenError, runService(
-		func(ctx context.Context, cancel context.CancelFunc) error {
-			return nil
-		},
-		func(ctx context.Context, cancel context.CancelFunc) error {
-			return givenError
-		},
-	))
-}
-
-func TestServiceInit(t *testing.T) {
-	SpanName = t.Name()
-	ServiceInstanceId = "Test"
-	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		common.StopSignalHandling(ctx)
-	}()
-
-	assert.NoError(t, serviceInit(ctx, cancel))
-	assert.Error(t, serviceInit(ctx, cancel))
+	assert.NoError(t, Execute())
 }
 
 func TestServiceMainTick(t *testing.T) {
-	SpanName = t.Name()
-	ServiceInstanceId = "Test"
+	common.ServiceInstanceId = "Test"
+	common.SpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		common.StopSignalHandling(ctx)
-	}()
 
-	assert.NoError(t, serviceInit(ctx, cancel))
+	assert.NoError(t, common.InitSignalHandler(ctx, cancel, nil))
+	defer common.StopSignalHandling(ctx)
 
 	timoutTimer := time.AfterFunc(time.Millisecond*250, func() {
 		cancel()
@@ -101,25 +40,23 @@ func TestServiceMainTick(t *testing.T) {
 	})
 	defer timoutTimer.Stop()
 
-	Tick = time.Millisecond * 50
-	assert.NoError(t, serviceMain(ctx, cancel))
+	tick = time.Millisecond * 50
+	assert.NoError(t, serviceMain(ctx, cancel, nil))
 }
 
 func TestServiceMainCancel(t *testing.T) {
-	SpanName = t.Name()
-	ServiceInstanceId = "Test"
+	common.ServiceInstanceId = "Test"
+	common.SpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		common.StopSignalHandling(ctx)
-	}()
 
-	assert.NoError(t, serviceInit(ctx, cancel))
+	assert.NoError(t, common.InitSignalHandler(ctx, cancel, nil))
+	defer common.StopSignalHandling(ctx)
 
 	sigintTimer := time.AfterFunc(time.Millisecond*50, func() {
 		cancel()
 	})
 	defer sigintTimer.Stop()
 
-	Tick = time.Millisecond * 250
-	assert.NoError(t, serviceMain(ctx, cancel))
+	tick = time.Millisecond * 250
+	assert.NoError(t, serviceMain(ctx, cancel, nil))
 }

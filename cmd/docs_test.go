@@ -26,7 +26,7 @@ func TestDocsCmd(t *testing.T) {
 			stubs.StubFunc(&generateDocsFunc, testCase.err)
 
 			rootCmd.SetArgs([]string{"docs", dir})
-			assert.Equal(t, testCase.err, rootCmd.Execute())
+			assert.Equal(t, testCase.err, Execute())
 		})
 	}
 }

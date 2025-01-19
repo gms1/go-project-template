@@ -29,9 +29,7 @@ func TestRootCmdFailing(t *testing.T) {
 		},
 	}
 	rootCmd.AddCommand(failingCmd)
-	defer func() {
-		rootCmd.RemoveCommand(failingCmd)
-	}()
+	defer rootCmd.RemoveCommand(failingCmd)
 
 	rootCmd.SetArgs([]string{"test-failing-command"})
 	assert.Equal(t, givenError, Execute())

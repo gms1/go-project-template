@@ -7,9 +7,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	FLAG_VERBOSE_NAME      = "verbose"
+	FLAG_VERBOSE_SHORTHAND = "v"
+	FLAG_QUIET_NAME        = "quiet"
+	FLAG_QUIET_SHORTHAND   = "q"
+)
+
 var (
-	Verbose bool = false
-	Quiet   bool = false
+	verbose bool
+	quiet   bool
 )
 
 var rootCmd = &cobra.Command{
@@ -20,10 +27,12 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		cmd.SilenceUsage = true
-		if Verbose && common.LogLevelVar.Level() > slog.LevelDebug {
+		v, _ := cmd.Flags().GetBool(FLAG_VERBOSE_NAME)
+		q, _ := cmd.Flags().GetBool(FLAG_QUIET_NAME)
+		if v && common.LogLevelVar.Level() > slog.LevelDebug {
 			common.LogLevelVar.Set(slog.LevelDebug)
 		}
-		if Quiet && common.LogLevelVar.Level() < slog.LevelWarn {
+		if q && common.LogLevelVar.Level() < slog.LevelWarn {
 			common.LogLevelVar.Set(slog.LevelWarn)
 		}
 		slog.Debug("start")
@@ -31,13 +40,19 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() error {
+	initPersistenceFlagValues()
 	return rootCmd.Execute()
+}
+
+func initPersistenceFlagValues() {
+	verbose = false
+	quiet = false
 }
 
 func init() {
 	cobra.EnableCommandSorting = false
-	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose mode")
-	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "quiet mode")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, FLAG_VERBOSE_NAME, FLAG_VERBOSE_SHORTHAND, false, "verbose mode")
+	rootCmd.PersistentFlags().BoolVarP(&quiet, FLAG_QUIET_NAME, FLAG_QUIET_SHORTHAND, false, "quiet mode")
 	rootCmd.AddCommand(serviceCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(docsCmd)

@@ -16,6 +16,11 @@ import (
 // please see: https://opentelemetry.io/docs/languages/go/instrumentation/
 //             https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration
 
+var (
+	ServiceInstanceId = "Default"
+	SpanName          = "RunService"
+)
+
 func NewOtelExporter(ctx context.Context) (sdktrace.SpanExporter, error) {
 	if os.Getenv("OTEL_SDK_DISABLED") == "true" {
 		slog.DebugContext(ctx, "opentelemetry is disabled")

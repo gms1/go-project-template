@@ -6,7 +6,6 @@ import (
 
 	"github.com/gms1/go-project-template/pkg/common"
 	"github.com/gms1/go-project-template/test"
-	"github.com/prashantv/gostub"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,13 +24,7 @@ func TestVersionCmd(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			common.LogLevelVar.Set(slog.LevelInfo)
-			defer func() {
-				common.LogLevelVar.Set(loglevelOri)
-			}()
-			stubs := gostub.New()
-			defer stubs.Reset()
-			stubs.Stub(&Verbose, false)
-			stubs.Stub(&Quiet, false)
+			defer common.LogLevelVar.Set(loglevelOri)
 
 			args := []string{"version"}
 			if testCase.verbose {
@@ -41,10 +34,19 @@ func TestVersionCmd(t *testing.T) {
 				args = append(args, "-q")
 			}
 			rootCmd.SetArgs(args)
-			stdout, _, err := test.CaptureOutput(func() error { return rootCmd.Execute() })
+			stdout, _, err := test.CaptureOutput(func() error { return Execute() })
 			assert.NoError(t, err)
 			assert.Equal(t, common.Version+"\n", stdout)
 			assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
+
+			v, err := rootCmd.Flags().GetBool(FLAG_VERBOSE_NAME)
+			assert.Nil(t, err)
+
+			q, err := rootCmd.Flags().GetBool(FLAG_QUIET_NAME)
+			assert.Nil(t, err)
+
+			assert.Equal(t, testCase.verbose, v)
+			assert.Equal(t, testCase.quiet, q)
 		})
 	}
 }

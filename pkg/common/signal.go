@@ -10,16 +10,19 @@ import (
 	"syscall"
 )
 
+type SigHupFunc func()
+
 var (
-	signalMutex sync.Mutex
-	signalChan  chan os.Signal
+	signalMutex                          sync.Mutex
+	signalChan                           chan os.Signal
+	ErrorSignalHandlerAlreadyInitialized = errors.New("signal handler is already initialized")
 )
 
-func InitSignalHandler(ctx context.Context, cancel func(), sighupFunc *func()) error {
+func InitSignalHandler(ctx context.Context, cancel func(), sighupFunc *SigHupFunc) error {
 	signalMutex.Lock()
 	defer signalMutex.Unlock()
 	if signalChan != nil {
-		return errors.New("signal handler is already initialized")
+		return ErrorSignalHandlerAlreadyInitialized
 	}
 	signalChan = make(chan os.Signal, 1)
 	if sighupFunc != nil {
@@ -45,7 +48,7 @@ func StopSignalHandling(ctx context.Context) {
 	slog.DebugContext(ctx, "Stopped signal handling")
 }
 
-func signalHandler(channel chan os.Signal, ctx context.Context, cancel func(), sighupFunc *func()) {
+func signalHandler(channel chan os.Signal, ctx context.Context, cancel func(), sighupFunc *SigHupFunc) {
 	for {
 		select {
 		case s := <-channel:
