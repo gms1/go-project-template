@@ -22,12 +22,10 @@ jobs:
       uses: golangci/golangci-lint-action@v6.1.0
     -
       name: Build
-      run: |
-        ./scripts/build.sh
+      run: make build
     -
       name: Test
-      run: |
-        ./scripts/test.sh
+      run: make test
     -
       name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
