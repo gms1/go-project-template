@@ -1,3 +1,8 @@
 #!/usr/bin/bash
 
+# the go-file containing the Version property
 ABOOUT_GO="pkg/common/core/about.go"
+
+# the cli for docker commands
+# DOCKER_CLI="podman"
+DOCKER_CLI="docker"

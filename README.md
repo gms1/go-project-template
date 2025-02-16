@@ -9,27 +9,17 @@
 
 ## usage
 
-- install required tools
+- install prerequisites
 
-  - gofumpt
+  - mandatory: gofumpt, golangci-lint and goreleaser
 
   ```bash
   go install mvdan.cc/gofumpt@latest
-  ```
-
-  - golangci-lint
-
-  ```bash
   go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-  ```
-
-  - goreleaser; optional: only needed if you want to build snapshot releases locally
-
-  ```bash
   go install github.com/goreleaser/goreleaser/v2@latest
   ```
 
-  - pre-commit; optional but recommended
+  - optional and recommended: pre-commit
 
   ```bash
   pip install pre-commit
@@ -65,4 +55,7 @@
   ```
 
   this updates the `Version` in "pkg/common/about.go", generates the docs in "docs" and commits and pushes the changes using the commit message "release: <version>".
-  A "v<version>" tag is then created and pushed, which triggers the release workflow from .github/workflows/release.yaml. This release workflow then creates the binaries and archives for the most important OS/Arch combinations, as well as a multi-platform docker image. If the later is not needed, the “Dockerfile” can be removed, as well as the "docker" and "docker_manifests" sections in ".goreleaser.yaml"
+
+  A "v<version>" tag is then created and pushed, which triggers the release workflow from .github/workflows/release.yaml.
+
+  This release workflow then creates the binaries and archives for the configured OS/Arch combinations, as well as a multi-platform docker image. If the later is not needed, the “Dockerfile” can be removed, as well as the "docker" and "docker_manifests" sections in ".goreleaser.yaml"

@@ -23,9 +23,11 @@ getopt "$@"
 
 info "jaeger-start..."
 
-docker rm -f jaeger &>/dev/null || true
-docker volume prune -f &>/dev/null || true
-docker run -d \
+[ -n "${DOCKER_CLI}" ] || DOCKER_CLI="docker"
+
+"${DOCKER_CLI}" rm -f jaeger &>/dev/null || true
+"${DOCKER_CLI}" volume prune -f &>/dev/null || true
+"${DOCKER_CLI}" run -d \
   -e COLLECTOR_OTLP_ENABLED=true \
   -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
   -p 5775:5775/udp \
