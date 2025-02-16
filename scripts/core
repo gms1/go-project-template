@@ -1,0 +1,511 @@
+#!/bin/bash
+set -o pipefail
+
+#============================================
+# constants
+
+ANSI_RED="\e[00;31m"
+ANSI_GREEN="\e[00;32m"
+ANSI_ORANGE="\e[00;33m"
+ANSI_BLUE="\e[00;34m"
+ANSI_PURPLE="\e[00;35m"
+ANSI_CYAN="\e[00;36m"
+ANSI_NONE='\e[00m'
+
+[ -n "${SCRIPT_BASENAME}" ] || SCRIPT_BASENAME=$(basename -- "$0")
+#============================================
+# compare values ​​and check existence
+
+#--------------------------------------------
+functionExist() {
+  declare -f "${1}" &>/dev/null
+}
+
+#============================================
+# i/o
+
+#--------------------------------------------
+errLine() {
+  echo "${ERR_PREFIX}$@" >&2
+}
+
+#--------------------------------------------
+errColor() {
+  local color="$1"
+  [ -t 2 ] && echo -n -e "${color}" >&2
+}
+
+#--------------------------------------------
+msg() {
+  echo "$@"
+}
+
+#--------------------------------------------
+err() {
+  errColor "${ANSI_RED}" >&2
+  errLine "ERROR: $*"
+  errColor "${ANSI_NONE}" >&2
+}
+
+#--------------------------------------------
+warn() {
+  errColor "${ANSI_ORANGE}" >&2
+  errLine "WARNING: $*"
+  errColor "${ANSI_NONE}" >&2
+}
+
+#--------------------------------------------
+info() {
+  errColor "${ANSI_GREEN}" >&2
+  errLine "INFO: $*"
+  errColor "${ANSI_NONE}" >&2
+}
+
+#--------------------------------------------
+debug() {
+  [ -n "${DEBUG}" -o -n "${debug}" ] || return 0
+  errLine "DEBUG: $*"
+}
+
+#--------------------------------------------
+confirm() {
+  local REPLY=""
+  errColor "${ANSI_PURPLE}" >&2
+  errLine "CONFIRM: $*"
+  errColor "${ANSI_NONE}" >&2
+  while [ "${REPLY,,}" != "y" -a "${REPLY,,}" != "n" ]; do
+    read -p "[yn]? " -n 1 -r
+    echo
+  done
+  [ "${REPLY,,}" != "y" ] || return 0
+  return 1
+}
+
+#--------------------------------------------
+die() {
+  err "$@"
+  [ -n "${_AIR_NO_EXIT}" ] || exit 1
+}
+
+#----------------------------------------------------------------------------------
+succeeded() {
+  local prefix
+  if [ "${#}" -ge 1  ]; then
+    prefix="${1}"
+    shift
+    if [ "${#}" -ge 1 ]; then
+      info "${prefix}: succeeded: $@"
+    else
+      info "${prefix}: succeeded"
+    fi
+  else
+    info "succeeded"
+  fi
+  exit 0
+}
+
+#--------------------------------------------
+infoIf() {
+  local var="$1"
+  local msg=( "$@" )
+  msg=( "${msg[@]:1}" )
+  [ "${#msg[@]}" -ge 1 ] || msg=( "${var}='${!var}'" )
+  if [ -n "${!var}" -a "${!var}" != "false" -a "${!var}" != "0" ]; then
+    info "${msg[@]}"
+  else
+    debug "${msg[@]}"
+  fi
+}
+
+#============================================
+# command execution
+
+#----------------------------------------------------------------------------------
+cmdresult() {
+  local RES=$?
+  if [ "${RES}" -ne 0 ]; then
+    err "$@: failed with exit code ${RES}"
+  else
+    errLine "$@: succeeded"
+  fi
+  return "${RES}"
+}
+
+#----------------------------------------------------------------------------------
+quietcmd() {
+  errLine "$@"
+  "$@" &>/dev/null
+  cmdresult "$@"
+  return $?
+}
+
+#--------------------------------------------
+cmd() {
+  errLine "$@"
+  "$@"
+  cmdresult "$@"
+  return $?
+}
+
+
+#============================================
+# date/time
+
+#----------------------------------------------------------------------------------
+getTimestamp() {
+  date "+%Y-%m-%d_%H:%M:%S" "$@"
+}
+
+#----------------------------------------------------------------------------------
+getDate() {
+  date "+%Y-%m-%d"
+}
+
+#----------------------------------------------------------------------------------
+getSeconds() {
+  date "+%s"
+}
+
+formatSeconds() {
+  (($1 >= 86400)) && printf '%d days, ' $(($1 / 86400))       # days
+  (($1 >= 3600)) && printf '%02d hours, ' $(($1 / 3600 % 24)) # hours
+  (($1 >= 60)) && printf '%02d minutes, ' $(($1 / 60 % 60))   # minutes
+  printf '%02d seconds.\n' $(($1 % 60))
+}
+
+displayElapsedTime() {
+  local prefix=$1
+  local start=$2
+  local end=$(getSeconds)
+  local seconds=$((end - start))
+  echo "${prefix} in $(formatSeconds ${seconds})"
+}
+
+
+#============================================
+# signal handler
+
+#--------------------------------------------
+declare -a CLEAN_ON_EXIT
+declare -a CALL_ON_EXIT
+declare -A LOCKS
+
+exitHandler() {
+  trap - "EXIT"
+  for name in "${!LOCKS[@]}"; do
+     lock="${LOCKS[${name}]}"
+     [ -n "${lock}" ] || continue
+     rm -f "${lock}"
+     LOCKS[${name}]=""
+  done
+  LOCKS=()
+  for fn in "${CALL_ON_EXIT[@]}"; do
+    functionExist "${fn}" || continue
+    "${fn}"
+  done
+  for f in "${CLEAN_ON_EXIT[@]}"; do
+    [ -n "${f}" ] || continue
+    [ -e "${f}" ] || continue
+    rm -rf "${f}"
+  done
+}
+
+trap "exitHandler" "EXIT"
+
+errorHandler() {
+  local script="$0"
+  local line="$1"
+  local command="$2"
+  local code="$3"
+  err "${script}: line: ${line}: command \"${command}\" exited with ${code}"
+}
+
+setErrorHandler() {
+  trap 'errorHandler "$LINENO" "$BASH_COMMAND" "$?"' "ERR"
+}
+
+clearErrorHandler() {
+  trap - "ERR"
+}
+
+setExitOnErrorOn() {
+  setErrorHandler
+  set -e
+}
+
+setExitOnErrorOff() {
+  clearErrorHandler
+  set +e
+}
+
+#============================================
+# temporary files/directories
+
+#--------------------------------------------
+createTempFile() {
+  local varname="$1"
+  local tmpfile=$(mktemp)
+
+  CLEAN_ON_EXIT+=("${tmpfile}")
+  if [ -z "${varname}" ]; then
+    echo "${tmpfile}"
+  else
+    declare -n ref="${varname}"
+    ref="${tmpfile}"
+    # printf -v ${var} '%s' "${tmpfile}"
+  fi
+}
+
+#--------------------------------------------
+createTempDir() {
+  local varname="$1"
+  local tmpfile=$(mktemp -d)
+
+  CLEAN_ON_EXIT+=("${tmpfile}")
+  if [ -z "${varname}" ]; then
+    echo "${tmpfile}"
+  else
+    declare -n ref="${varname}"
+    ref="${tmpfile}"
+    # printf -v ${var} '%s' "${tmpfile}"
+  fi
+}
+
+#============================================
+# retry and lock
+
+#--------------------------------------------
+# retry <retries> <wait> <command...>
+
+retry() {
+  local retries=$1
+  shift
+  local wait=$1
+  shift
+  local rc=0
+  local count=0
+  until "$@" &>/dev/null; do
+    rc=$?
+    count=$(($count + 1))
+    echo -n "." >&2
+    if [ "${retries}" -ge 0 -a "${count}" -ge "${retries}" ]; then
+      echo >&2
+      return "${rc}"
+    fi
+    sleep "${wait}"
+  done
+  echo >&2
+  return 0
+}
+
+#--------------------------------------------
+# lock_optain <lock> <retries> <wait>
+# NOTE: most probably you want to use flock instead
+#          lock_file="..."
+#          exec 4>"${lock_file}" # open file descriptor
+#          flock 4 # lock file descriptor
+#            ...
+#          exec 4>&- # close file descriptor
+
+
+lock_optain() {
+  local LOCK="${1}"
+  local RETRIES="${2}"
+  local WAIT="${3}"
+
+  local LOCKPID="$$"
+  local TMPLOCK
+  local LOCKDIR=$(dirname "${LOCK}")
+  local LOCKFILE=$(basename "${LOCK}")
+
+  [[ "${LOCKFILE}" =~ ^[a-zA-Z0-9-]+$ ]] || die "basename of lockfile should contain only alphanumeric characters or '-' but is '${LOCKFILE}'"
+
+  TMPLOCK=$(mktemp -p "${LOCKDIR}" "${LOCKFILE}_XXXXXX.tmp" 2>/dev/null)
+  [ -f "${TMPLOCK}" ] || die "unable to create temporary file in directory '${LOCKDIR}' with mktemp"
+  echo "${LOCKPID}" >"${TMPLOCK}"
+
+  # attempt to obtain lock file by trying to create a hard link which is atomic on all POSIX systems
+  retry "${RETRIES}" "${WAIT}" ln "${TMPLOCK}" "${LOCK}" 2>/dev/null
+  if [ $? -ne 0 ]; then
+    rm -f "${TMPLOCK}"
+    err "unable to obtain lockfile"
+    [ ! -f "${LOCK}" ] || err "current lock information held by PID: $(cat "${LOCK}")"
+    return 2
+  fi
+  LOCKS[${LOCKFILE}]=$(realpath "${LOCK}")
+  rm -f "${TMPLOCK}"
+  return 0
+}
+
+lock_free() {
+  local LOCKFILE=$(basename "${1}")
+  local oldlock
+
+  [[ "${LOCKFILE}" =~ ^[a-zA-Z0-9]+$ ]] || return 1
+  oldlock="${LOCKS[${LOCKFILE}]}"
+  [ -n "${oldlock}" ] || return 2
+  rm -f "${oldlock}"
+  LOCKS[${LOCKFILE}]=""
+  unset LOCKS["${LOCKFILE}"]
+  return 0
+}
+
+#============================================
+# changed files
+
+warnIfChanged() {
+  local trg="$1"
+  local src="$2"
+  if diff -U0 --new-file "${trg}" "${src}" &>/dev/null; then
+    return 0
+  fi
+  echo "diff -u '${src}' '${trg}'"
+  warn "files differ, please run one of the following commands:"
+  echo "     cp -a '${src}' '${trg}'"
+  echo "     cp -a '${trg}' '${src}'"
+  return 1
+}
+
+updateIfChanged() {
+  local trg="$1"
+  local src="$2"
+  if diff -U0 --new-file "${trg}" "${src}"; then
+    rm -f "${src}" &>/dev/null || rm -f "${src}"
+    return 0
+  else
+    echo "updating '${trg}'"
+    cp -a "${src}" "${trg}" &>/dev/null || cp -a "${src}" "${trg}" || die "failed to update '${trg}'"
+    rm -f "${src}" &>/dev/null || rm -f "${src}"
+    return 1
+  fi
+}
+
+sudoUpdateIfChanged() {
+  local trg="$1"
+  local src="$2"
+  local sudo="$3"
+  if diff -U0 --new-file "${trg}" "${src}"; then
+    rm -f "${src}" &>/dev/null || sudo rm -f "${src}"
+    return 0
+  else
+    echo "updating '${trg}'"
+    cp -a "${src}" "${trg}" &>/dev/null || sudo cp -a "${src}" "${trg}" || die "failed to update '${trg}'"
+    rm -f "${src}" &>/dev/null || sudo rm -f "${src}"
+    return 1
+  fi
+}
+
+
+#============================================
+# getopt
+
+#--------------------------------------------
+printArguments() {
+  local res=""
+  for arg in "$@"; do
+    if [ -n "${res}" ]; then
+      res="${res} '${arg}'"
+    else
+      res="'${arg}'"
+    fi
+  done
+  echo ${res}
+}
+#--------------------------------------------
+callUsageEndExit() {
+  local rc="$1"
+  if functionExist "usage"; then
+    usage
+    [ -z "${rc}" ] || exit "${rc}"
+    exit 1
+  else
+    die "usage info not available"
+  fi
+}
+#--------------------------------------------
+getopt() {
+  local in_mainopt=1
+  local is_debug="${DEBUG}"
+  ARGS=()
+  MAIN_ARGS=()
+  MORE_ARGS=()
+  OPTION_NAMES=()
+  UNKNOWN_OPTIONS=()
+  debug   "getopt:"
+  for arg in "$@"; do
+    if [ "${in_mainopt}" -ge 1 ]; then
+      case "${arg}" in
+      "--")
+        if [ "${in_mainopt}" -ge 1 ]; then
+          in_mainopt=0
+          MAIN_ARGS=( "${ARGS[@]}" )
+          continue
+        fi
+        ;;
+      "--help" | "-h")
+        callUsageEndExit 0
+        ;;
+      esac
+    fi
+    if [ "${in_mainopt}" -eq 0 ]; then
+      ARGS+=("${arg}")
+      MORE_ARGS+=("${arg}")
+      continue
+    fi
+
+    local opt_name=
+    local argument="${arg/#-/}"
+    if [ "${arg}" != "${argument}" ]; then
+      argument="${argument/#-/}"
+      for opt in "${OPTS[@]}"; do
+        if [[ "${argument}" =~ ^${opt}=(.*)$ ]]; then
+          opt_name="${opt}"
+          eval "${opt}='${BASH_REMATCH[1]}'"
+          debug "   setting option '${opt_name}'='${!opt_name}'"
+          break
+        fi
+        if [ "${argument}" = "${opt}" ]; then
+          opt_name="${opt}"
+          eval "${argument}=1"
+          debug "   setting option '${opt_name}' to default (${!opt_name})"
+          break
+        fi
+      done
+    fi
+    if [ -z "${opt_name}" ]; then
+      [ "${argument}" = "${arg}" ] || UNKNOWN_OPTIONS+=("${arg}")
+      ARGS+=("${arg}")
+      debug "   adding argument: '${arg}'"
+    else
+      OPTION_NAMES+=("${opt_name}")
+    fi
+  done
+  if [ "${in_mainopt}" -ge 1 ]; then
+    MAIN_ARGS=( "${ARGS[@]}" )
+  fi
+  if [ "${#UNKNOWN_OPTIONS[@]}" -ge 1 ]; then
+    for opt in "${UNKNOWN_OPTIONS[@]}"; do
+      err "unknown option: ${opt}"
+    done
+    callUsageEndExit 1
+  fi
+  if [ -n "${is_debug}" ]; then
+    if [ "${#ARGS[@]}" -ge 1 ]; then
+      debug "   arguments:" $(printArguments "${ARGS[@]}")
+    else
+      debug "   arguments: none"
+    fi
+    if [ "${#OPTS[@]}" -ge 1 ]; then
+      if [ "${#OPTION_NAMES[@]}" -ge 1 ]; then
+        debug "   options provided: ${OPTION_NAMES[@]}"
+      else
+        debug "   options provided: none"
+      fi
+      debug "   option values:"
+      for opt in "${OPTS[@]}"; do
+        debug "     ${opt}='${!opt}'"
+      done
+    fi
+  fi
+  return 0
+}

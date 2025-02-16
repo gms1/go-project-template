@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gms1/go-project-template/pkg/common"
+	"github.com/gms1/go-project-template/pkg/common/core"
 	"github.com/prashantv/gostub"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/trace"
@@ -14,13 +14,13 @@ import (
 
 func AssertNoSignalHandler(t *testing.T) {
 	t.Helper()
-	assert.False(t, common.HasSignalHandler(), "a signal handler is registered")
+	assert.False(t, core.HasSignalHandler(), "a signal handler is registered")
 }
 
 func TestServiceCmd(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	common.ServiceInstanceId = "Test"
-	common.SpanName = t.Name()
+	core.ServiceInstanceId = "Test"
+	core.SpanName = t.Name()
 	stubs := gostub.New()
 	defer stubs.Reset()
 	stubs.Stub(&serviceMainFunc, func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error {
@@ -34,12 +34,12 @@ func TestServiceCmd(t *testing.T) {
 
 func TestServiceMainTick(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	common.ServiceInstanceId = "Test"
-	common.SpanName = t.Name()
+	core.ServiceInstanceId = "Test"
+	core.SpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
 
-	assert.NoError(t, common.InitSignalHandler(ctx, cancel, nil))
-	defer common.StopSignalHandling(ctx)
+	assert.NoError(t, core.InitSignalHandler(ctx, cancel, nil))
+	defer core.StopSignalHandling(ctx)
 
 	timoutTimer := time.AfterFunc(time.Millisecond*250, func() {
 		cancel()
@@ -56,12 +56,12 @@ func TestServiceMainTick(t *testing.T) {
 
 func TestServiceMainCancel(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	common.ServiceInstanceId = "Test"
-	common.SpanName = t.Name()
+	core.ServiceInstanceId = "Test"
+	core.SpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
 
-	assert.NoError(t, common.InitSignalHandler(ctx, cancel, nil))
-	defer common.StopSignalHandling(ctx)
+	assert.NoError(t, core.InitSignalHandler(ctx, cancel, nil))
+	defer core.StopSignalHandling(ctx)
 
 	sigintTimer := time.AfterFunc(time.Millisecond*50, func() {
 		cancel()

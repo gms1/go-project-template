@@ -7,17 +7,22 @@ usage() {
   cat <<EOT
 usage: ${BN} OPTIONS
 
+builds the project
+
 OPTIONS:
-  -h|--help|help  ... display this usage information and exit
+  -h|--help  ... display this usage information and exit
 EOT
   exit 1
 }
 
-[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
+OPTS=()
+getopt "$@"
 
-echo "build..."
+[ "${#ARGS[@]}" -eq 0 ] || usage
+
+info "build..."
 
 go generate
 go build -v
 
-echo "build: SUCCEEDED"
+succeeded "build"

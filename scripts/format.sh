@@ -5,24 +5,27 @@ source "${DN}/common"
 
 usage() {
   cat <<EOT
-usage: ${BN} OPTIONS [gofumpt arguments...]
+usage: ${BN} OPTIONS [-- [gofumpt arguments...]]
 
-all arguments will be forwarded to 'gofumpt'
+all arguments after '--' will be forwarded to 'gofumpt'
 
 OPTIONS:
-  -h|--help|help  ... display this usage information and exit
+  -h|--help  ... display this usage information and exit
 EOT
   exit 1
 }
 
-[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
+OPTS=()
+getopt "$@"
 
-if [ $# -ge 1 ]; then
-  exec gofumpt -l -w "$@"
+[ "${#MAIN_ARGS[@]}" -eq 0 ] || usage
+
+if [ "${#MORE_ARGS[@]}" -ge 1 ]; then
+  exec gofumpt -l -w "${MORE_ARGS[@]}"
 fi
 
-echo "format..."
+info "format..."
 
 gofumpt -l -w .
 
-echo "format: SUCCEEDED"
+succeeded "format"

@@ -18,12 +18,12 @@ repos:
   hooks:
     - id: format
       name: "Format (gofumpt)"
-      entry: "./scripts/format.sh"
+      entry: "./scripts/format.sh --"
       language: script
       types: [go]
     - id: lint
       name: "Lint (golangci-lint)"
-      entry: "./scripts/lint.sh"
+      entry: "./scripts/lint.sh --"
       language: script
       types: [go]
       pass_filenames: false

@@ -7,29 +7,36 @@ usage() {
   cat <<EOT
 usage: ${BN} OPTIONS <version>
 
-OPTIONS:
-  -h|--help|help  ... display this usage information and exit
+creates a release using the specified <version>
 
-environment variables:
-  FORCE ... if set to non-empty, the tag will be recreated if it exists
+OPTIONS:
+  -f|--force ... force recreating of the tag if it already exists
+  -h|--help  ... display this usage information and exit
+
 EOT
   exit 1
 }
 
-[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
 
-VER="$1"
-[ -n "${VER}" -a "$#" -eq 1 ] || usage
+OPTS=(f force)
+getopt "$@"
 
-echo "release ${VER}..."
+[ "${#ARGS[@]}" -eq 1] || usage
+
+VER="${ARGS[0]}"
+[ -n "${VER}" ] || usage
+
+[ -z "${f}" ] || force="${f}"
+
+info "release ${VER}..."
 
 gitMustBeClean
 
-sed -i "s|\(Version\s*=\s*\"\)[^\"]*\"|\1${VER}\"|" pkg/common/about.go
+sed -i "s|\(Version\s*=\s*\"\)[^\"]*\"|\1${VER}\"|" "${ABOOUT_GO}"
 
 go build -v ./...
 
-git add pkg/common/about.go
+git add "${ABOOUT_GO}"
 
 ./go-project-template docs ./docs/
 git add docs
@@ -41,10 +48,10 @@ if ! git diff --cached --quiet; then
 
 fi
 
-if [ -n "${FORCE}" ]; then
+if [ -n "${force}" ]; then
   git push origin ":refs/tags/v${VER}"
 fi
 git tag "v${VER}" -f -a -m "release: ${VER}"
 git push origin --tags
 
-echo "release ${VER}: SUCCEEDED"
+succeeded "release" "creating version '${VER}'"

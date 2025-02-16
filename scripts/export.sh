@@ -7,21 +7,25 @@ usage() {
   cat <<EOT
 usage: ${BN} OPTIONS <target-project-name> [target-project-owner]
 
+exports this project
+
 OPTIONS:
-  -h|--help|help  ... display this usage information and exit
+  -h|--help  ... display this usage information and exit
 
 EOT
   exit 1
 }
 
+OPTS=()
+getopt "$@"
 
-[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
+[ "${#ARGS[@]}" -ge 1 -a "${#ARGS[@]}" -le 2 ] || usage
 
-PROJECT_NAME="$1"
-PROJECT_OWNER="$2"
-[ -n "${PROJECT_NAME}" -a "$#" -ge 1 -a "$#" -le 2 ] || usage
+PROJECT_NAME="${ARGS[0]}"
+PROJECT_OWNER="${ARGS[1]}"
+[ -n "${PROJECT_NAME}" ] || usage
 
-echo "export..."
+info "export..."
 
 PARENT_PREFIX=$(realpath ..)
 
@@ -33,7 +37,7 @@ cd "${PARENT_PREFIX}/${PROJECT_NAME}/"
 rm -rf "docs"
 mkdir -p "docs"
 
-sed -i "s|\(Version\s*=\s*\"\)[^\"]*\"|\10.0.1\"|" pkg/common/about.go
+sed -i "s|\(Version\s*=\s*\"\)[^\"]*\"|\10.0.1\"|" "${ABOOUT_GO}"
 
 find . -type f -exec sed -i "s|go-project-template|${PROJECT_NAME}|g" {} \;
 
@@ -43,4 +47,4 @@ fi
 
 cd -
 
-echo "export: SUCCEEDED to '${PARENT_PREFIX}/${PROJECT_NAME}'"
+succeeded "export" "to export to '${PARENT_PREFIX}/${PROJECT_NAME}'"

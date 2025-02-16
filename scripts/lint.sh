@@ -7,17 +7,23 @@ usage() {
   cat <<EOT
 usage: ${BN} OPTIONS
 
+lints the project
+
 OPTIONS:
-  -h|--help|help  ... display this usage information and exit
+  -h|--help  ... display this usage information and exit
 EOT
   exit 1
 }
 
-[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
 
-echo "lint..."
+OPTS=()
+getopt "$@"
+
+[ "${#ARGS[@]}" -eq 0 ] || usage
+
+info "lint..."
 
 go mod tidy
 golangci-lint run
 
-echo "lint: SUCCEEDED"
+succeeded "lint"

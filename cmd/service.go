@@ -5,15 +5,15 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/gms1/go-project-template/pkg/common"
+	"github.com/gms1/go-project-template/pkg/common/core"
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	sighupFunc      *common.SigHupFunc
-	serviceMainFunc common.ServiceMainFunc = serviceMain
-	tick                                   = 10 * time.Second
+	sighupFunc      *core.SigHupFunc
+	serviceMainFunc core.ServiceMainFunc = serviceMain
+	tick                                 = 10 * time.Second
 )
 
 var serviceCmd = &cobra.Command{
@@ -21,7 +21,7 @@ var serviceCmd = &cobra.Command{
 	Short: "Run a service",
 	Long:  `Run as a service`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return common.RunService(serviceMainFunc, sighupFunc)
+		return core.RunService(serviceMainFunc, sighupFunc)
 	},
 }
 

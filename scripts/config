@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ABOOUT_GO="pkg/common/core/about.go"

@@ -5,18 +5,20 @@ source "${DN}/common"
 
 usage() {
   cat <<EOT
-usage: ${BN} OPTIONS [go-test arguments...]
+usage: ${BN} OPTIONS [-- [go-test arguments...]]
 
-all arguments will be forwarded to 'go test'
+runs the tests for this project
+
+all arguments after '--' will be forwarded to 'go test'
   e.g. for running the tests multiple times (this will take about 30s):
-    VERBOSE=1 ./scripts/test.sh -count 100 -shuffle on
+    VERBOSE=1 ./scripts/test.sh -- -count 100 -shuffle on
   e.g. for selecting a specific test you can use:
-    ./scripts/test.sh -run '^TestName$'
+    ./scripts/test.sh -- -run '^TestName$'
   NOTE: setting "-parallel n" does not seem to have any effect, it looks like we have to
     call "t.Parallel()" inside the tests too, to mark the tests as parallizable
 
 OPTIONS:
-  -h|--help|help  ... display this usage information and exit
+  -h|--help  ... display this usage information and exit
 
 environment variables:
   VERBOSE
@@ -32,20 +34,6 @@ EOT
   exit 1
 }
 
-[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
-
-
-echo "test..."
-
-if [ -z "${OTEL_SDK_DISABLED}" -a -z "${OTEL_EXPORTER_OTLP_ENDPOINT}" ]; then
-  export OTEL_SDK_DISABLED="true"
-fi
-
-exitHandler() {
-  trap - "EXIT"
-  rm -f "${LOG}"
-}
-
 colorize() {
   awk '
     function color(c,s) {
@@ -58,31 +46,40 @@ colorize() {
   '  "$@"
 }
 
-trap exitHandler "EXIT"
+
+OPTS=()
+getopt "$@"
+
+[ "${#MAIN_ARGS[@]}" -eq 0 ] || usage
+
+info "test..."
+
+if [ -z "${OTEL_SDK_DISABLED}" -a -z "${OTEL_EXPORTER_OTLP_ENDPOINT}" ]; then
+  export OTEL_SDK_DISABLED="true"
+fi
+
 
 mkdir -p tmp
 
 start=$(date "+%s")
 
 cmd=(go test ./... -cover -coverprofile=tmp/coverage.out -v)
-if [ "$#" -eq 0 ]; then
+if [ "${#MORE_ARGS[@]}" -eq 0 ]; then
   cmd+=(-count=1)
 fi
-cmd+=( "$@" )
+cmd+=( "${MORE_ARGS[@]}" )
 
-trap - "ERR"
 set +e
-echo "${cmd[@]}"
+echo "\$ ${cmd[@]}"
 if [ -n "${VERBOSE}" ]; then
   "${cmd[@]}" 2>&1 | colorize
   RC=$?
 else
-  LOG=$(mktemp)
+  createTempFile LOG
   "${cmd[@]}" &>"${LOG}"
   RC=$?
   [ "${RC}" -eq 0 ] || colorize "${LOG}"
 fi
-setErrorHandler
 set -e
 
 end=$(date "+%s")
@@ -90,6 +87,6 @@ seconds=$((end - start))
 
 [ "${RC}" -eq 0 ] || die "test: FAILED in ${seconds} seconds."
 
-echo "test: COVERAGE:"
-go tool cover -func=./tmp/coverage.out | sed '/100\.0/d; s/^/  /'
-echo "test: SUCCEEDED in ${seconds} seconds."
+info "test: COVERAGE:"
+go tool cover -func=./tmp/coverage.out | awk '$3 !~ /100\.0%/{ sub(/:$/,"",$1); print "  " $3 " " $1 }'
+succeeded "test" "in ${seconds} seconds."

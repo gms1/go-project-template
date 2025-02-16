@@ -2,40 +2,21 @@
 SCRIPT_DIRNAME=$(dirname -- "${BASH_SOURCE[0]}")
 WORKSPACE_DIR=$(realpath "${SCRIPT_DIRNAME}/..")
 
+source "${SCRIPT_DIRNAME}/core"
+
+
 #---------------------------------------------------------
-err() {
-  [ -t 2 ] && echo -n -e "\e[00;31m" >&2
-  echo "ERROR: $@" >&2
-  [ -t 2 ] && echo -n -e '\e[00m' >&2
+getVersion() {
+  awk -F\" '/Version/{print $2}' "${WORKSPACE_DIR}/${ABOOUT_GO}"
 }
 
 #---------------------------------------------------------
-die() {
-  err "$@"
-  exit 1
-}
-
-#---------------------------------------------------------
-errorHandler() {
-  local script="$0"
-  local line="$1"
-  local command="$2"
-  local code="$3"
-  set +x
-  err "${script}: line: ${line}: command \"${command}\" exited with ${code}"
-}
-
-#---------------------------------------------------------
-setVersion() {
-  VERSION=$(awk -F\" '/Version/{print $2}' "${WORKSPACE_DIR}/pkg/common/about.go")
-}
-
-#---------------------------------------------------------
-setNextVersion() {
-  local versionParts=( $(echo ${VERSION//./ } ))
+getNextVersion() {
+  local version="$(getVersion)"
+  local versionParts=( $(echo ${version//./ } ))
   local nextPatchVersion="${versionParts[2]}"
   nextPatchVersion="$((nextPatchVersion + 1))"
-  NEXT_VERSION="${versionParts[0]}.${versionParts[1]}.${nextPatchVersion}"
+  echo "${versionParts[0]}.${versionParts[1]}.${nextPatchVersion}"
 }
 
 #---------------------------------------------------------
@@ -45,14 +26,7 @@ gitMustBeClean() {
 }
 
 #---------------------------------------------------------
-setErrorHandler() {
-  trap 'errorHandler "$LINENO" "$BASH_COMMAND" "$?"' "ERR"
-}
+setExitOnErrorOn
+source "${SCRIPT_DIRNAME}/config"
 
-#---------------------------------------------------------
-setErrorHandler
-set -e
-set -o pipefail
-
-setVersion
 cd "${WORKSPACE_DIR}"

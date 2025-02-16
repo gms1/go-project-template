@@ -7,16 +7,21 @@ usage() {
   cat <<EOT
 usage: ${BN} OPTIONS
 
+cleans the project from temporary files
+
 OPTIONS:
-  -h|--help|help  ... display this usage information and exit
+  -h|--help  ... display this usage information and exit
 EOT
   exit 1
 }
 
-[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
+OPTS=()
+getopt "$@"
 
-echo "clean..."
+[ "${#ARGS[@]}" -eq 0 ] || usage
+
+info "clean..."
 
 rm -rf dist tmp go-project-template
 
-echo "clean: SUCCEEDED"
+succeeded "clean"

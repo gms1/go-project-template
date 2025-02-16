@@ -7,15 +7,21 @@ usage() {
   cat <<EOT
 usage: ${BN} OPTIONS
 
+runs jaeger in a container called 'jaeger'
+
 OPTIONS:
-  -h|--help|help  ... display this usage information and exit
+  -h|--help  ... display this usage information and exit
 EOT
   exit 1
 }
 
-[ "$1" != '-h' -a "$1" != '--help' -a "$1" != 'help'  ] || usage
 
-echo "jaeger-start..."
+OPTS=()
+getopt "$@"
+
+[ "${#ARGS[@]}" -eq 0 ] || usage
+
+info "jaeger-start..."
 
 docker rm -f jaeger &>/dev/null || true
 docker volume prune -f &>/dev/null || true
@@ -42,4 +48,4 @@ docker run -d \
 # 14250	HTTP	collector	accept model.proto
 #  9411	HTTP	collector	Zipkin compatible endpoint (optional)
 
-echo "jaeger-start: SUCCEEDED"
+succeeded "jaeger-start"

@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/gms1/go-project-template/pkg/common"
+	"github.com/gms1/go-project-template/pkg/common/core"
 	"github.com/gms1/go-project-template/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,11 +20,11 @@ func TestVersionCmd(t *testing.T) {
 		{"verbose", true, false, slog.LevelDebug},
 		{"quiet", false, true, slog.LevelWarn},
 	}
-	loglevelOri := common.LogLevelVar.Level()
+	loglevelOri := core.LogLevelVar.Level()
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			common.LogLevelVar.Set(slog.LevelInfo)
-			defer common.LogLevelVar.Set(loglevelOri)
+			core.LogLevelVar.Set(slog.LevelInfo)
+			defer core.LogLevelVar.Set(loglevelOri)
 
 			args := []string{"version"}
 			if testCase.verbose {
@@ -36,8 +36,8 @@ func TestVersionCmd(t *testing.T) {
 			rootCmd.SetArgs(args)
 			stdout, _, err := test.CaptureOutput(func() error { return Execute() })
 			assert.NoError(t, err)
-			assert.Equal(t, common.Version+"\n", stdout)
-			assert.Equal(t, testCase.expectedLogLevel, common.LogLevelVar.Level())
+			assert.Equal(t, core.Version+"\n", stdout)
+			assert.Equal(t, testCase.expectedLogLevel, core.LogLevelVar.Level())
 
 			v, err := rootCmd.Flags().GetBool(FLAG_VERBOSE_NAME)
 			assert.Nil(t, err)
