@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 DN=$(dirname -- "$0")
 BN=$(basename -- "$0")
 source "${DN}/common"
