@@ -1,9 +1,10 @@
 # go-project-template
 
 [![GitHub License](https://img.shields.io/github/license/gms1/go-project-template)](https://raw.githubusercontent.com/gms1/go-project-template/refs/heads/main/LICENSE)
-[![build Status](https://github.com/gms1/go-project-template/actions/workflows/build.yaml/badge.svg)](https://github.com/gms1/go-project-template/actions/workflows/build.yaml)
+[![Build Status](https://github.com/gms1/go-project-template/actions/workflows/build.yaml/badge.svg)](https://github.com/gms1/go-project-template/actions/workflows/build.yaml)
 [![Coverage Status](https://codecov.io/gh/gms1/go-project-template/branch/main/graph/badge.svg)](https://codecov.io/gh/gms1/go-project-template)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gms1/go-project-template)](https://goreportcard.com/report/github.com/gms1/go-project-template)
+[![Codebeat](https://codebeat.co/badges/428d115f-b017-40c4-b0d8-e1c10725056f)](https://codebeat.co/projects/github-com-gms1-go-project-template-main)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gms1/go-project-template?status.svg)](https://pkg.go.dev/github.com/gms1/go-project-template?tab=doc)
 [![Release](https://img.shields.io/github/release/gms1/go-project-template.svg?style=flat-square)](https://github.com/gms1/go-project-template/releases)
 
