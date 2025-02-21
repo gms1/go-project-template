@@ -1,28 +1,174 @@
+# please see https://gist.github.com/maratori/47a4d00457a92aa426dbd48a18776322
+
 linters:
   enable:
-    - gofumpt
-    - thelper
-    - goimports
-    - tparallel
-    - wastedassign
-    - unparam
-    - prealloc
-    - unconvert
-    - exhaustive
-    - makezero
-    - nakedret
-    - copyloopvar
+    # default linters:
+    - errcheck # for checking for unchecked errors in Go code
+    - gosimple # linter for simplifying code
+    - govet # reports suspicious constructs
+    - staticcheck # a set of rules from staticcheck
+    - unused # unused constants, variables, functions and types
+    - ineffassign # unused assignments
+
+    # disabled by default:
+    - gofumpt # Checks if code and import statements are formatted, with additional rules
+    - goimports # Checks if the code and import statements are formatted according to the 'goimports' command
+    - depguard
+
+    - thelper # detects tests helpers which is not start with t.Helper() method
+    - tparallel # detects inappropriate usage of t.Parallel() method
+
+    - asasalint # checks for pass []any as any in variadic func(...any)
+    - bidichk # checks for dangerous unicode character sequences
+    - wastedassign # wasted assignment statements
+    - unparam # unused function parameters
+    - prealloc # finds slice declarations that could potentially be pre-allocated
+    - unconvert # Finds unnecessary type conversions
+    - exhaustive # Check exhaustiveness of enum switch statements
+    - makezero # Finds slice declarations with non-zero initial length
+    - nakedret #  Checks that functions with naked returns are not longer than a maximum size (can be zero)
+    - copyloopvar # detects places where loop variables are copied
+    - cyclop # checks function and package cyclomatic complexity
+    - dupl # tool for code clone detection
+    - durationcheck # checks for two durations multiplied together
+    - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
+    - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
+    - exptostd # detects functions from golang.org/x/exp/ that can be replaced by std functions
+    - fatcontext # detects nested contexts in loops
+    - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
+    - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
+    - gochecksumtype # checks exhaustiveness on Go "sum types"
+    - gocognit # computes and checks the cognitive complexity of functions
+    - goconst # finds repeated strings that could be replaced by a constant
+    - gocritic # provides diagnostics that check for bugs, performance and style issues
+    - gocyclo # computes and checks the cyclomatic complexity of functions
+    - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
+    - goprintffuncname # checks that printf-like functions are named with f at the end
+    - gosec # inspects source code for security problems
+    - iface # checks the incorrect use of interfaces, helping developers avoid interface pollution
+    - intrange # finds places where for loops could make use of an integer range
+    - mirror # reports wrong mirror patterns of bytes/strings usage
+    - musttag # enforces field tags in (un)marshaled structs
+    - nestif # reports deeply nested if statements
+    - nilerr # finds the code that returns nil even if it checks that the error is not nil
+    - nilnesserr # reports that it checks for err != nil, but it returns a different nil value error (powered by nilness and nilerr)
+    - nilnil # checks that there is no simultaneous return of nil error and an invalid value
+    - nonamedreturns # reports all named returns
+    - nosprintfhostport # checks for misuse of Sprintf to construct a host with port in a URL
+    - perfsprint # checks that fmt.Sprintf can be replaced with a faster alternative
+    - predeclared # finds code that shadows one of Go's predeclared identifiers
+    - protogetter # reports direct reads from proto message fields when getters should be used
+    - recvcheck # checks for receiver type consistency
+    - spancheck # checks for mistakes with OpenTelemetry/Census spans
+    - gochecknoglobals # checks that no global variables exist
+    - gochecknoinits # checks that no init functions are present in Go code
+
   fast: false
 
 linters-settings:
+
   copyloopvar:
     # Check all assigning the loop variable to another variable.
     # Default: false
     # If true, an assignment like `a := x` will be detected as an error.
     check-alias: true
+
+  cyclop:
+    # The maximal code complexity to report.
+    max-complexity: 30
+    # The maximal average package complexity.
+    package-average: 10.0
+
+  depguard:
+    # Default (applies if no custom rules are defined): Only allow $gostd in all files.
+    rules:
+      legacy:
+        # List of packages that are not allowed.
+        # Entries can be a variable (starting with $), a string prefix, or an exact match (if ending with $).
+        deny:
+          - pkg: "math/rand$"
+            desc: "Use math/rand/v2 instead, see https://go.dev/blog/randv2"
+          - pkg: "github.com/golang/protobuf"
+            desc: "Use google.golang.org/protobuf instead, see https://developers.google.com/protocol-buffers/docs/reference/go/faq#modules"
+          - pkg: "github.com/satori/go.uuid"
+            desc: "Use github.com/google/uuid instead, satori's package is not maintained"
+          - pkg: "github.com/gofrs/uuid$"
+            desc: "Use github.com/gofrs/uuid/v5 or later, it was not a go module before v5"
+
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    # Such cases aren't reported by default.
+    check-type-assertions: true
+
   exhaustive:
+    # Program elements to check for exhaustiveness.
     default-signifies-exhaustive: true
-  staticcheck:
-    checks: ["all"]
+    # Default: [ switch ]
+    check:
+      - switch
+      - map
+
+  gochecksumtype:
+    # Presence of `default` case in switch statements satisfies exhaustiveness, if all members are not listed.
+    default-signifies-exhaustive: false
+
+  gocognit:
+    # Minimal code complexity to report.
+    # Default: 30 (but we recommend 10-20)
+    min-complexity: 20
+
+  gocritic:
+    # https://go-critic.com/overview
+
+    enabled-checks:
+      # performance: (since all performance checkers are disabled by default)
+      - appendCombine
+      - equalFold
+      - hugeParam
+      - indexAlloc
+      - preferDecodeRune
+      - preferFprint
+      - preferStringWriter
+      - preferWriteByte
+      - rangeExprCopy
+      - rangeValCopy
+      - sliceClear
+      - stringXbytes
+
+  govet:
+    # Enable all analyzers.
+    # Default: false
+    enable-all: true
+    # Disable analyzers by name.
+    # Run `go tool vet help` to see all analyzers.
+    # Default: []
+    disable:
+      - fieldalignment # too strict
+    # Settings per analyzer.
+    settings:
+      shadow:
+        # Whether to be strict about shadowing; can be noisy.
+        # Default: false
+        strict: true
+
   nakedret:
     max-func-lines: 0
+
+  perfsprint:
+    # Optimizes into strings concatenation.
+    strconcat: false
+
+  staticcheck:
+    checks: ["all"]
+
+issues:
+  exclude-rules:
+    - path: "_test\\.go"
+      linters:
+        - dupl
+        - goconst
+        - gosec
+        - gocognit
+    - path: "cmd/"
+      linters:
+        - gochecknoglobals
