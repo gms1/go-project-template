@@ -13,16 +13,16 @@ import (
 type SigHupFunc func()
 
 var (
-	signalMutex                          sync.Mutex
-	signalChan                           chan os.Signal
-	ErrorSignalHandlerAlreadyInitialized = errors.New("signal handler is already initialized")
+	signalMutex                        sync.Mutex     //nolint:gochecknoglobals
+	signalChan                         chan os.Signal //nolint:gochecknoglobals
+	ErrSignalHandlerAlreadyInitialized = errors.New("signal handler is already initialized")
 )
 
 func InitSignalHandler(ctx context.Context, cancel func(), sighupFunc *SigHupFunc) error {
 	signalMutex.Lock()
 	defer signalMutex.Unlock()
 	if signalChan != nil {
-		return ErrorSignalHandlerAlreadyInitialized
+		return ErrSignalHandlerAlreadyInitialized
 	}
 	signalChan = make(chan os.Signal, 1)
 	if sighupFunc != nil {

@@ -40,7 +40,7 @@ func TestInitSignalHandler(t *testing.T) {
 
 			err := InitSignalHandler(ctx, cancel, nil)
 			if assert.Error(t, err, "init twice") {
-				assert.Equal(t, ErrorSignalHandlerAlreadyInitialized, err)
+				assert.Equal(t, ErrSignalHandlerAlreadyInitialized, err)
 			}
 
 			var sighupTimer, sigintTimer, timoutTimer *time.Timer

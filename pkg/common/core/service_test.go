@@ -51,7 +51,7 @@ func TestRunServiceFailingInitSignalHandler(t *testing.T) {
 		nil,
 	)
 	if assert.Error(t, err) {
-		assert.Equal(t, ErrorSignalHandlerAlreadyInitialized, err)
+		assert.Equal(t, ErrSignalHandlerAlreadyInitialized, err)
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 const LOG_LEVEL_NAME = "LOG_LEVEL"
 
 // NOTE: use this LogLevelVar if you are going to create a new Logger for replacing the default logger
-var LogLevelVar = new(slog.LevelVar)
+var LogLevelVar = new(slog.LevelVar) //nolint:gochecknoglobals
 
 func defaultLogLevel() slog.Level {
 	var level slog.Level
@@ -45,7 +45,7 @@ func InitServiceLogging() {
 	slog.SetDefault(slog.New(NewServiceHandler(os.Stdout)))
 }
 
-func init() {
+func init() { //nolint:gochecknoinits
 	LogLevelVar.Set(defaultLogLevel())
 	InitConsoleLogging()
 }

@@ -17,8 +17,8 @@ import (
 //             https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration
 
 var (
-	ServiceInstanceId = "Default"
-	SpanName          = "RunService"
+	ServiceInstanceId = "Default"    //nolint:gochecknoglobals
+	SpanName          = "RunService" //nolint:gochecknoglobals
 )
 
 func NewOtelExporter(ctx context.Context) (sdktrace.SpanExporter, error) {

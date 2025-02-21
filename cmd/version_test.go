@@ -34,7 +34,7 @@ func TestVersionCmd(t *testing.T) {
 				args = append(args, "-q")
 			}
 			rootCmd.SetArgs(args)
-			stdout, _, err := test.CaptureOutput(func() error { return Execute() })
+			stdout, _, err := test.CaptureOutput(Execute)
 			assert.NoError(t, err)
 			assert.Equal(t, core.Version+"\n", stdout)
 			assert.Equal(t, testCase.expectedLogLevel, core.LogLevelVar.Level())
