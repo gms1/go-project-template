@@ -14,8 +14,7 @@ import (
 
 func TestRunServiceOk(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	ServiceInstanceId = "Test"
-	SpanName = t.Name()
+	ServiceSpanName = t.Name()
 	_, found := os.LookupEnv("OTEL_SDK_DISABLED")
 	if !found {
 		t.Setenv("OTEL_SDK_DISABLED", "true")
@@ -29,36 +28,9 @@ func TestRunServiceOk(t *testing.T) {
 	))
 }
 
-func TestRunServiceFailingInitSignalHandler(t *testing.T) {
-	defer AssertNoSignalHandler(t)
-	ServiceInstanceId = "Test"
-	SpanName = t.Name()
-	_, found := os.LookupEnv("OTEL_SDK_DISABLED")
-	if !found {
-		t.Setenv("OTEL_SDK_DISABLED", "true")
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	assert.NoError(t, InitSignalHandler(ctx, cancel, nil))
-	defer StopSignalHandling(ctx)
-
-	err := RunService(
-		func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error {
-			return nil
-		},
-		nil,
-	)
-	if assert.Error(t, err) {
-		assert.Equal(t, ErrSignalHandlerAlreadyInitialized, err)
-	}
-}
-
 func TestRunServiceFailingMain(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	ServiceInstanceId = "Test"
-	SpanName = t.Name()
+	ServiceSpanName = t.Name()
 	_, found := os.LookupEnv("OTEL_SDK_DISABLED")
 	if !found {
 		t.Setenv("OTEL_SDK_DISABLED", "true")

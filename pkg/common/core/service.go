@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
+	"github.com/google/uuid"
 	gomaxecs "github.com/rdforte/gomaxecs/maxprocs"
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -18,66 +19,52 @@ type (
 	ServiceMainFunc func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error
 )
 
-type Service struct {
-	main          ServiceMainFunc
-	sigHupFunc    *SigHupFunc
+var ServiceSpanName = "RunService" //nolint:gochecknoglobals
+
+type ServiceContext struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	traceProvider *sdktrace.TracerProvider
 	tracer        trace.Tracer
 }
 
-func NewService(main ServiceMainFunc, sigHupFunc *SigHupFunc) Service {
-	service := Service{main: main, sigHupFunc: sigHupFunc}
+func NewService(sigHupFunc *SigHupFunc) ServiceContext {
+	service := ServiceContext{}
 	service.ctx, service.cancel = context.WithCancel(context.Background())
+	InitSignalHandler(service.ctx, service.cancel, sigHupFunc)
+	service.traceProvider = NewOtelDefaultTraceProvider(service.ctx, uuid.NewString())
+	otel.SetTracerProvider(service.traceProvider)
+	service.tracer = service.traceProvider.Tracer(Package)
 	return service
 }
 
-func (service *Service) Init() error {
-	if err := InitSignalHandler(service.ctx, service.cancel, service.sigHupFunc); err != nil {
-		slog.ErrorContext(service.ctx, "Failed to initialize", slog.Any("error", err))
-		return err
-	}
-	service.traceProvider = NewOtelDefaultTraceProvider(service.ctx, ServiceInstanceId)
-	otel.SetTracerProvider(service.traceProvider)
-	service.tracer = service.traceProvider.Tracer(Package)
-	return nil
-}
-
-func (service *Service) Run() error {
-	ctx, span := service.tracer.Start(service.ctx, SpanName)
+func (service *ServiceContext) Run(main ServiceMainFunc) error {
+	ctx, span := service.tracer.Start(service.ctx, ServiceSpanName)
 	defer span.End()
 
-	err := service.main(ctx, service.cancel, span)
+	err := main(ctx, service.cancel, span)
 	if err != nil {
 		slog.ErrorContext(ctx, "Running service failed", slog.Any("error", err))
 		return err
 	}
+	slog.DebugContext(service.ctx, "end")
 	return nil
+}
+
+func (service *ServiceContext) Shutdown() {
+	StopSignalHandling(service.ctx)
+	service.cancel()
+	_ = service.traceProvider.Shutdown(service.ctx)
 }
 
 func RunService(main ServiceMainFunc, sigHupFunc *SigHupFunc) error {
 	InitServiceLogging()
 	InitServiceRuntime()
 
-	service := NewService(main, sigHupFunc)
-	defer service.cancel()
+	service := NewService(sigHupFunc)
+	defer service.Shutdown()
 
-	err := service.Init()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		StopSignalHandling(service.ctx)
-		_ = service.traceProvider.Shutdown(service.ctx)
-	}()
-
-	err = service.Run()
-	if err != nil {
-		return err
-	}
-	slog.DebugContext(service.ctx, "end")
-	return nil
+	return service.Run(main)
 }
 
 // InitServiceRuntime set defaults for GOMAXPROCS and GOMEMLIMIT if running in cgroup

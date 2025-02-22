@@ -18,11 +18,11 @@ var (
 	ErrSignalHandlerAlreadyInitialized = errors.New("signal handler is already initialized")
 )
 
-func InitSignalHandler(ctx context.Context, cancel func(), sighupFunc *SigHupFunc) error {
+func InitSignalHandler(ctx context.Context, cancel func(), sighupFunc *SigHupFunc) {
 	signalMutex.Lock()
 	defer signalMutex.Unlock()
 	if signalChan != nil {
-		return ErrSignalHandlerAlreadyInitialized
+		panic(ErrSignalHandlerAlreadyInitialized)
 	}
 	signalChan = make(chan os.Signal, 1)
 	if sighupFunc != nil {
@@ -34,7 +34,6 @@ func InitSignalHandler(ctx context.Context, cancel func(), sighupFunc *SigHupFun
 	}
 
 	go signalHandler(signalChan, ctx, cancel, sighupFunc)
-	return nil
 }
 
 func StopSignalHandling(ctx context.Context) {

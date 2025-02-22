@@ -33,15 +33,15 @@ func TestInitSignalHandler(t *testing.T) {
 				var sighupFunc SigHupFunc = func() {
 					sighupCounter++
 				}
-				assert.NoError(t, InitSignalHandler(ctx, cancel, &sighupFunc), "init with sighup")
+				InitSignalHandler(ctx, cancel, &sighupFunc)
 			} else {
-				assert.NoError(t, InitSignalHandler(ctx, cancel, nil), "init without sighup")
+				InitSignalHandler(ctx, cancel, nil)
 			}
 
-			err := InitSignalHandler(ctx, cancel, nil)
-			if assert.Error(t, err, "init twice") {
-				assert.Equal(t, ErrSignalHandlerAlreadyInitialized, err)
+			initTwice := func() {
+				InitSignalHandler(ctx, cancel, nil)
 			}
+			assert.Panics(t, initTwice, "The code did not panic")
 
 			var sighupTimer, sigintTimer, timoutTimer *time.Timer
 
