@@ -19,8 +19,6 @@ type (
 	ServiceMainFunc func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error
 )
 
-var ServiceSpanName = "RunService" //nolint:gochecknoglobals
-
 type ServiceContext struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
@@ -28,7 +26,7 @@ type ServiceContext struct {
 	tracer        trace.Tracer
 }
 
-func NewService(sigHupFunc *SigHupFunc) ServiceContext {
+func NewServiceContext(sigHupFunc *SigHupFunc) ServiceContext {
 	service := ServiceContext{}
 	service.ctx, service.cancel = context.WithCancel(context.Background())
 	InitSignalHandler(service.ctx, service.cancel, sigHupFunc)
@@ -38,8 +36,8 @@ func NewService(sigHupFunc *SigHupFunc) ServiceContext {
 	return service
 }
 
-func (service *ServiceContext) Run(main ServiceMainFunc) error {
-	ctx, span := service.tracer.Start(service.ctx, ServiceSpanName)
+func (service *ServiceContext) Run(main ServiceMainFunc, serviceSpanName string) error {
+	ctx, span := service.tracer.Start(service.ctx, serviceSpanName)
 	defer span.End()
 
 	err := main(ctx, service.cancel, span)
@@ -57,14 +55,14 @@ func (service *ServiceContext) Shutdown() {
 	_ = service.traceProvider.Shutdown(service.ctx)
 }
 
-func RunService(main ServiceMainFunc, sigHupFunc *SigHupFunc) error {
+func RunService(main ServiceMainFunc, sigHupFunc *SigHupFunc, serviceSpanName string) error {
 	InitServiceLogging()
 	InitServiceRuntime()
 
-	service := NewService(sigHupFunc)
+	service := NewServiceContext(sigHupFunc)
 	defer service.Shutdown()
 
-	return service.Run(main)
+	return service.Run(main, serviceSpanName)
 }
 
 // InitServiceRuntime set defaults for GOMAXPROCS and GOMEMLIMIT if running in cgroup

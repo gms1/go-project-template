@@ -13,6 +13,7 @@ import (
 var (
 	sighupFunc      *core.SigHupFunc
 	serviceMainFunc core.ServiceMainFunc = serviceMain
+	serviceSpanName                      = "main"
 	tick                                 = 10 * time.Second
 )
 
@@ -21,7 +22,7 @@ var serviceCmd = &cobra.Command{
 	Short: "Run a service",
 	Long:  `Run as a service`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return core.RunService(serviceMainFunc, sighupFunc)
+		return core.RunService(serviceMainFunc, sighupFunc, serviceSpanName)
 	},
 }
 

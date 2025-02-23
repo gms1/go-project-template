@@ -19,7 +19,7 @@ func AssertNoSignalHandler(t *testing.T) {
 
 func TestServiceCmd(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	core.ServiceSpanName = t.Name()
+	serviceSpanName = t.Name()
 	stubs := gostub.New()
 	defer stubs.Reset()
 	stubs.Stub(&serviceMainFunc, func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error {
@@ -33,7 +33,7 @@ func TestServiceCmd(t *testing.T) {
 
 func TestServiceMainTick(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	core.ServiceSpanName = t.Name()
+	serviceSpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
 
 	core.InitSignalHandler(ctx, cancel, nil)
@@ -54,7 +54,7 @@ func TestServiceMainTick(t *testing.T) {
 
 func TestServiceMainCancel(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	core.ServiceSpanName = t.Name()
+	serviceSpanName = t.Name()
 	ctx, cancel := context.WithCancel(context.Background())
 
 	core.InitSignalHandler(ctx, cancel, nil)

@@ -14,7 +14,6 @@ import (
 
 func TestRunServiceOk(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	ServiceSpanName = t.Name()
 	_, found := os.LookupEnv("OTEL_SDK_DISABLED")
 	if !found {
 		t.Setenv("OTEL_SDK_DISABLED", "true")
@@ -25,12 +24,12 @@ func TestRunServiceOk(t *testing.T) {
 			return nil
 		},
 		nil,
+		t.Name(),
 	))
 }
 
 func TestRunServiceFailingMain(t *testing.T) {
 	defer AssertNoSignalHandler(t)
-	ServiceSpanName = t.Name()
 	_, found := os.LookupEnv("OTEL_SDK_DISABLED")
 	if !found {
 		t.Setenv("OTEL_SDK_DISABLED", "true")
@@ -43,6 +42,7 @@ func TestRunServiceFailingMain(t *testing.T) {
 			return givenError
 		},
 		nil,
+		t.Name(),
 	))
 }
 
