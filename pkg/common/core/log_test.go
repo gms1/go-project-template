@@ -1,9 +1,15 @@
 package core
 
 import (
+	"context"
+	"errors"
 	"log/slog"
+	"runtime/debug"
 	"testing"
 
+	"github.com/gms1/go-project-template/test"
+	"github.com/lmittmann/tint"
+	slogotel "github.com/remychantenay/slog-otel"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,6 +33,37 @@ func TestDefaultLogLevel(t *testing.T) {
 	}
 }
 
-func TestInitServiceLogging(t *testing.T) {
+func TestInitLogging(t *testing.T) {
 	InitServiceLogging()
+	assert.IsType(t, slogotel.OtelHandler{}, slog.Default().Handler())
+	InitConsoleLogging()
+	assert.IsType(t, tint.NewHandler(nil, &tint.Options{}), slog.Default().Handler())
+}
+
+func TestLogErrorAndStackTrace(t *testing.T) {
+	ctx := context.Background()
+	testCases := []struct {
+		name       string
+		givenError error
+		hasStack   bool
+	}{
+		{"error without stack", errors.New("error{no stack}"), false},
+		{"error with stack", NewStackTraceError(debug.Stack(), "{failed}"), true},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, stderr, _ := test.CaptureOutput(func() error {
+				InitConsoleLogging()
+				LogErrorAndStackTrace(ctx, testCase.name, testCase.givenError)
+				return nil
+			})
+			assert.Contains(t, stderr, testCase.name)
+			assert.Contains(t, stderr, testCase.givenError.Error())
+			if testCase.hasStack {
+				assert.Contains(t, stderr, STACK_TRACE_MARKER)
+			} else {
+				assert.NotContains(t, stderr, STACK_TRACE_MARKER)
+			}
+		})
+	}
 }

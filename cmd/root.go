@@ -22,6 +22,11 @@ var rootCmd = &cobra.Command{
 	Args:    cobra.MinimumNArgs(1),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		cmd.SilenceUsage = true
+		cmd.SilenceErrors = true
+		commandStarted = true
+		if cmd.Name() == "help" {
+			silentEnd = true
+		}
 		v, _ := cmd.Flags().GetBool(FLAG_VERBOSE_NAME)
 		q, _ := cmd.Flags().GetBool(FLAG_QUIET_NAME)
 		if v && core.LogLevelVar.Level() > slog.LevelDebug {

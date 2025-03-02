@@ -20,6 +20,7 @@ func TestRunServiceOk(t *testing.T) {
 	}
 
 	assert.NoError(t, RunService(
+		context.Background(),
 		func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error {
 			return nil
 		},
@@ -28,22 +29,42 @@ func TestRunServiceOk(t *testing.T) {
 	))
 }
 
-func TestRunServiceFailingMain(t *testing.T) {
+func TestRunServiceErrors(t *testing.T) {
 	defer AssertNoSignalHandler(t)
 	_, found := os.LookupEnv("OTEL_SDK_DISABLED")
 	if !found {
 		t.Setenv("OTEL_SDK_DISABLED", "true")
 	}
 
-	givenError := errors.New("test main failed")
+	givenError := errors.New("test main error")
 
-	assert.Equal(t, givenError, RunService(
+	assert.Equal(t, givenError, ErrorRootCause(RunService(
+		context.Background(),
 		func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error {
 			return givenError
 		},
 		nil,
 		t.Name(),
-	))
+	)))
+}
+
+func TestRunServicePanics(t *testing.T) {
+	defer AssertNoSignalHandler(t)
+	_, found := os.LookupEnv("OTEL_SDK_DISABLED")
+	if !found {
+		t.Setenv("OTEL_SDK_DISABLED", "true")
+	}
+
+	givenErrorText := "test main panic"
+	err := RunService(
+		context.Background(),
+		func(ctx context.Context, cancel context.CancelFunc, span trace.Span) error {
+			panic(givenErrorText)
+		},
+		nil,
+		t.Name(),
+	)
+	assert.Contains(t, givenErrorText, err.Error())
 }
 
 func TestInitServiceRuntime(t *testing.T) {
@@ -66,7 +87,7 @@ func TestInitServiceRuntime(t *testing.T) {
 			} else {
 				t.Setenv("ECS_CONTAINER_METADATA_URI_V4", "")
 			}
-			InitServiceRuntime()
+			InitServiceRuntime(context.Background())
 			assert.Equal(t, givenMaxProcs, runtime.GOMAXPROCS(0))
 			assert.Equal(t, givenMemLimit, os.Getenv("GOMEMLIMIT"))
 		})

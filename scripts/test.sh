@@ -63,11 +63,12 @@ mkdir -p tmp
 
 start=$(date "+%s")
 
-cmd=(go test ./... -cover -coverprofile=tmp/coverage.out -v)
+cmd=(go test -cover -coverprofile=tmp/coverage.out -v)
 if [ "${#MORE_ARGS[@]}" -eq 0 ]; then
-  cmd+=(-count=1)
+  cmd+=(-count=1 ./...)
+else
+  cmd+=( "${MORE_ARGS[@]}" )
 fi
-cmd+=( "${MORE_ARGS[@]}" )
 
 set +e
 echo "\$ ${cmd[@]}"
@@ -86,7 +87,5 @@ end=$(date "+%s")
 seconds=$((end - start))
 
 [ "${RC}" -eq 0 ] || die "test: FAILED in ${seconds} seconds."
-
-info "test: COVERAGE:"
-go tool cover -func=./tmp/coverage.out | awk '$3 !~ /100\.0%/{ sub(/:$/,"",$1); print "  " $3 " " $1 }'
+./scripts/coverage-report.sh
 succeeded "test" "in ${seconds} seconds."

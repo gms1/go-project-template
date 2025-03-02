@@ -15,12 +15,10 @@ var docsCmd = &cobra.Command{
 	Long:  `Generate docs`,
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := generateDocsFunc(rootCmd, args[0])
-		if err != nil {
-			slog.Error("Failed to generate docs", slog.Any("error", err))
+		if err := generateDocsFunc(rootCmd, args[0]); err != nil {
 			return err
 		}
-		slog.Info("Generated docs", slog.String("directory", args[0]))
+		slog.InfoContext(cmd.Context(), "Generated docs", slog.String("directory", args[0]))
 		return nil
 	},
 }

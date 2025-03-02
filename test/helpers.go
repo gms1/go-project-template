@@ -6,6 +6,10 @@ import (
 	"github.com/prashantv/gostub"
 )
 
+// CaptureOutput captures the output of stdout and stderr for calling the given function
+//
+//	in case you want to get the output of a logger, please make sure that the logging handler is created inside
+//	the given function, otherwise it will not use the stubs
 func CaptureOutput(f func() error) (string, string, error) {
 	outFile, _ := os.CreateTemp("", "gotest")
 	errFile, _ := os.CreateTemp("", "gotest")

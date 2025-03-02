@@ -22,11 +22,11 @@ var serviceCmd = &cobra.Command{
 	Short: "Run a service",
 	Long:  `Run as a service`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return core.RunService(serviceMainFunc, sighupFunc, serviceSpanName)
+		silentEnd = true // errors are logged by core.RunService, so should not be logged again
+		return core.RunService(cmd.Context(), serviceMainFunc, sighupFunc, serviceSpanName)
 	},
 }
 
-//nolint:unparam
 func serviceMain(ctx context.Context, cancel context.CancelFunc, span trace.Span) error {
 	ticked := false
 	for {
@@ -40,7 +40,7 @@ func serviceMain(ctx context.Context, cancel context.CancelFunc, span trace.Span
 				slog.DebugContext(ctx, "Cancelled in main")
 				return nil
 			} else {
-				slog.InfoContext(ctx, "tick")
+				slog.InfoContext(ctx, "Tick")
 				ticked = true
 			}
 		}

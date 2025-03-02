@@ -18,7 +18,7 @@ import (
 
 func NewOtelExporter(ctx context.Context) (sdktrace.SpanExporter, error) {
 	if os.Getenv("OTEL_SDK_DISABLED") == "true" {
-		slog.DebugContext(ctx, "opentelemetry is disabled")
+		slog.DebugContext(ctx, "Opentelemetry is disabled")
 		return tracetest.NewNoopExporter(), nil
 	}
 	return otlptracegrpc.New(ctx)

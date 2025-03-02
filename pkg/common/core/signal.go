@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -13,9 +12,8 @@ import (
 type SigHupFunc func()
 
 var (
-	signalMutex                        sync.Mutex     //nolint:gochecknoglobals
-	signalChan                         chan os.Signal //nolint:gochecknoglobals
-	ErrSignalHandlerAlreadyInitialized = errors.New("signal handler is already initialized")
+	signalMutex sync.Mutex     //nolint:gochecknoglobals
+	signalChan  chan os.Signal //nolint:gochecknoglobals
 )
 
 func InitSignalHandler(ctx context.Context, cancel func(), sighupFunc *SigHupFunc) {

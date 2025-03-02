@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"runtime"
+	"runtime/debug"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/google/uuid"
@@ -26,9 +27,9 @@ type ServiceContext struct {
 	tracer        trace.Tracer
 }
 
-func NewServiceContext(sigHupFunc *SigHupFunc) ServiceContext {
+func NewServiceContext(ctx context.Context, sigHupFunc *SigHupFunc) ServiceContext {
 	service := ServiceContext{}
-	service.ctx, service.cancel = context.WithCancel(context.Background())
+	service.ctx, service.cancel = context.WithCancel(ctx)
 	InitSignalHandler(service.ctx, service.cancel, sigHupFunc)
 	service.traceProvider = NewOtelDefaultTraceProvider(service.ctx, uuid.NewString())
 	otel.SetTracerProvider(service.traceProvider)
@@ -40,13 +41,24 @@ func (service *ServiceContext) Run(main ServiceMainFunc, serviceSpanName string)
 	ctx, span := service.tracer.Start(service.ctx, serviceSpanName)
 	defer span.End()
 
-	err := main(ctx, service.cancel, span)
+	err := service.runMain(ctx, main, span)
 	if err != nil {
-		slog.ErrorContext(ctx, "Running service failed", slog.Any("error", err))
+		LogErrorAndStackTrace(ctx, "Service failed", err)
 		return err
 	}
-	slog.DebugContext(service.ctx, "end")
+	slog.InfoContext(ctx, "Service ended")
 	return nil
+}
+
+func (service *ServiceContext) runMain(ctx context.Context, main ServiceMainFunc, span trace.Span) (err error) {
+	// NOTE: this method should not panic, so we are able to log all errors returned
+	defer func() {
+		if r := recover(); r != nil {
+			err = NewStackTraceError(debug.Stack(), r)
+		}
+	}()
+	err = main(ctx, service.cancel, span)
+	return err
 }
 
 func (service *ServiceContext) Shutdown() {
@@ -55,19 +67,20 @@ func (service *ServiceContext) Shutdown() {
 	_ = service.traceProvider.Shutdown(service.ctx)
 }
 
-func RunService(main ServiceMainFunc, sigHupFunc *SigHupFunc, serviceSpanName string) error {
+func RunService(ctx context.Context, main ServiceMainFunc, sigHupFunc *SigHupFunc, serviceSpanName string) error {
 	InitServiceLogging()
-	InitServiceRuntime()
 
-	service := NewServiceContext(sigHupFunc)
+	service := NewServiceContext(ctx, sigHupFunc)
 	defer service.Shutdown()
+
+	InitServiceRuntime(service.ctx)
 
 	return service.Run(main, serviceSpanName)
 }
 
 // InitServiceRuntime set defaults for GOMAXPROCS and GOMEMLIMIT if running in cgroup
 // since currently the go runtime is not container/cgroup-aware (please see e.g https://github.com/golang/go/issues/33803)
-func InitServiceRuntime() {
+func InitServiceRuntime(ctx context.Context) {
 	// NOTE: maxprocs.Set honors GOMAXPROCS environment variable if present
 	if gomaxecs.IsECS() {
 		//nolint:errcheck
@@ -76,7 +89,7 @@ func InitServiceRuntime() {
 		//nolint:errcheck
 		maxprocs.Set(maxprocs.Logger(log.Printf))
 	}
-	slog.Info("CPU:", slog.Int("GOMAXPROCS", runtime.GOMAXPROCS(0)), slog.Int("NumCPU", runtime.NumCPU()))
+	slog.InfoContext(ctx, "CPU:", slog.Int("GOMAXPROCS", runtime.GOMAXPROCS(0)), slog.Int("NumCPU", runtime.NumCPU()))
 
 	// NOTE: memlimit.SetGoMemLimitWithOpts honors GOMEMLIMIT environment variable if present
 	//nolint:errcheck
