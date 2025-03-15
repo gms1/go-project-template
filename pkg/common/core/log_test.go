@@ -26,7 +26,7 @@ func TestDefaultLogLevel(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Setenv(LOG_LEVEL_NAME, testCase.givenLogLevel)
+			t.Setenv(LOG_LEVEL_ENV_VAR, testCase.givenLogLevel)
 			level := defaultLogLevel()
 			assert.Equal(t, testCase.expectedLogLevel, level)
 		})

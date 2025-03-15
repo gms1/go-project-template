@@ -65,7 +65,7 @@ start=$(date "+%s")
 
 cmd=(go test -cover -coverprofile=tmp/coverage.out -v)
 if [ "${#MORE_ARGS[@]}" -eq 0 ]; then
-  cmd+=(-count=1 ./...)
+  cmd+=( -count=1 $(go list ./...  | grep -vE '/test($|/)') )
 else
   cmd+=( "${MORE_ARGS[@]}" )
 fi

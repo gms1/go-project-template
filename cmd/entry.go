@@ -45,9 +45,12 @@ func executeCommand() (err error) {
 
 func init() { //nolint:gochecknoinits
 	cobra.EnableCommandSorting = false
+	// global flags available in all commands
 	rootCmd.PersistentFlags().BoolVarP(&verbose, FLAG_VERBOSE_NAME, FLAG_VERBOSE_SHORTHAND, false, "verbose mode")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, FLAG_QUIET_NAME, FLAG_QUIET_SHORTHAND, false, "quiet mode")
 	rootCmd.AddCommand(serviceCmd)
+	// local flags:
+	//   example: serviceCmd.Flags().IntP("port", "p", 8080, "port to serve on")
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(docsCmd)
 }
