@@ -24,6 +24,6 @@ go install mvdan.cc/gofumpt@latest
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 go install github.com/goreleaser/goreleaser/v2@latest
 
-if [ -n "$(which pip)" ]; then
-  pip install pre-commit
+if [ -n "$(which pip)" -a -z "$(which pre-commit)" ]; then
+  pip install -q pre-commit
 fi

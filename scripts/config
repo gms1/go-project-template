@@ -6,3 +6,6 @@ ABOOUT_GO="pkg/common/core/about.go"
 # the cli for docker commands
 # DOCKER_CLI="podman"
 DOCKER_CLI="docker"
+
+# upgrade mode (default: minor)
+# UPGRADE_MODE="patch"

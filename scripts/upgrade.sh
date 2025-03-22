@@ -7,8 +7,7 @@ usage() {
   cat <<EOT
 usage: ${BN} OPTIONS
 
-installs or upgrades prerequisites
-and runs 'clean', 'format', 'lint', 'build' and 'test'
+upgrade modules and prerequisites
 
 OPTIONS:
   -h|--help  ... display this usage information and exit
@@ -21,9 +20,8 @@ getopt "$@"
 
 [ "${#ARGS[@]}" -eq 0 ] || usage
 
-./scripts/prerequisites.sh
-./scripts/clean.sh
-./scripts/format.sh
-./scripts/lint.sh
-./scripts/build.sh
-./scripts/test.sh
+upgrade_flag="-u"
+[ "${UPGRADE_MODE}" != "patch" ] || upgrade_flag="-u=patch"
+
+go get ${upgrade_flag} -t ./...
+go mod tidy
