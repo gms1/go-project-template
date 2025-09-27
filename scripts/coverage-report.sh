@@ -11,7 +11,7 @@ generates the coverage report and optional opens it in the browser
 
 OPTIONS:
   -h|--help  ... display this usage information and exit
-  --open     ... do not open in browser
+  --open     ... open in browser
 EOT
   exit 1
 }
